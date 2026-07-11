@@ -116,7 +116,7 @@ public actor CodexAppServerClient: UsageProviding {
         "clientInfo": [
           "name": "codex-meter",
           "title": "CodexMeter",
-          "version": "0.1.0",
+          "version": "0.2.0",
         ],
         "capabilities": [
           "experimentalApi": true,

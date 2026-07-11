@@ -11,7 +11,10 @@ let package = Package(
     .executable(name: "CodexMeter", targets: ["CodexMeter"])
   ],
   targets: [
-    .target(name: "CodexMeterKit"),
+    .target(
+      name: "CodexMeterKit",
+      resources: [.process("Resources")]
+    ),
     .executableTarget(
       name: "CodexMeter",
       dependencies: ["CodexMeterKit"]

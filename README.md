@@ -1,12 +1,16 @@
 # CodexMeter
 
+<p align="center">
+  <img src="./Resources/AppIcon.png" width="128" height="128" alt="CodexMeter app icon">
+</p>
+
 一枚常驻 macOS 的极简 Codex 用量小组件：在桌面上快速查看当前账户的剩余额度、重置时间与当天 token 用量。界面采用 SwiftUI + AppKit，使用系统材质呈现轻量毛玻璃效果，并提供平滑的状态与数值过渡。
 
 > CodexMeter 是社区项目，不是 OpenAI 官方产品。它只在本机运行，但额度数据仍需由本机 Codex 通过 OpenAI 账户服务获取。
 
 ## 功能 / Features
 
-- 显示 Codex 当前速率限制、可用比例与重置时间。
+- 显示 Codex 当前速率限制、可用比例，以及每分钟更新的 5 小时重置倒计时。
 - 显示账户服务返回的当天 token 活动汇总。
 - 三种窗口模式：
   - **始终置顶**：像小宠物一样悬浮于其他窗口之上。
@@ -39,7 +43,7 @@ AppKit 窗口/菜单栏控制 ── 置顶、隐藏、桌面层
 account/rateLimits/read + account/usage/read
 ```
 
-项目是一个 Swift Package：可执行 target 负责应用生命周期和窗口，`CodexMeterKit` 封装用量模型、app-server 客户端与可测试逻辑。Release 打包脚本将可执行文件、`Info.plist` 和 SwiftPM 编译后的资源 bundle 组装成标准 `.app`。
+项目是一个 Swift Package：可执行 target 负责应用生命周期和窗口，`CodexMeterKit` 封装用量模型、app-server 客户端与可测试逻辑。Release 打包脚本将可执行文件、`Info.plist`、AppIcon 和 SwiftPM 编译后的资源 bundle 组装成标准 `.app`。应用图标可通过 `./Scripts/generate-icon.sh` 从 1024×1024 源图重新生成。
 
 ## 环境要求
 
@@ -107,7 +111,7 @@ DIST_DIR="$PWD/dist" ./Scripts/install-local.sh
 - 不读取、复制或打包 `.env`、API key、Codex 登录文件等秘密信息。
 - app-server 使用你现有的 Codex 登录态向 OpenAI 请求账户用量；因此“本地部署”不等于离线统计。
 - UI 只展示接口返回的额度/用量状态。请不要把它当作账单、发票或成本审计工具。
-- 构建脚本仅复制 Release 可执行文件、Info.plist 与编译后的 SwiftPM `.bundle`，并尽可能进行本地 ad-hoc 签名。
+- 构建脚本仅复制 Release 可执行文件、Info.plist、AppIcon 与编译后的 SwiftPM `.bundle`，并尽可能进行本地 ad-hoc 签名。
 
 ## 已知限制
 
