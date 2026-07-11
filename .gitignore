@@ -1,0 +1,25 @@
+# Swift Package Manager
+.build/
+.swiftpm/
+DerivedData/
+
+# Local bundles and distribution output
+dist/
+*.app/
+
+# macOS and IDE state
+.DS_Store
+*.xcuserstate
+xcuserdata/
+
+# Local configuration and credentials (never commit these)
+.env
+.env.*
+!.env.example
+.codex/
+auth.json
+credentials.json
+secrets.*
+*.key
+*.pem
+*.p12
