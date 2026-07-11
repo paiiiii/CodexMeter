@@ -48,13 +48,7 @@ public struct WidgetView: View {
 
   private var header: some View {
     HStack(spacing: 8) {
-      ZStack {
-        Circle()
-          .fill(.primary.opacity(0.1))
-        Image(systemName: "circle.hexagongrid.fill")
-          .font(.system(size: 11, weight: .semibold))
-      }
-      .frame(width: 24, height: 24)
+      CodexMeterBrandMark()
 
       Text("CODEXMETER")
         .font(.system(size: 10, weight: .semibold, design: .rounded))
@@ -170,6 +164,26 @@ public struct WidgetView: View {
   }
 }
 
+private struct CodexMeterBrandMark: View {
+  private let image = CodexMeterResources.markURL.flatMap(NSImage.init(contentsOf:))
+
+  var body: some View {
+    Group {
+      if let image {
+        Image(nsImage: image)
+          .resizable()
+          .interpolation(.high)
+          .scaledToFit()
+      } else {
+        Image(systemName: "gauge.with.dots.needle.0percent")
+          .font(.system(size: 14, weight: .semibold))
+      }
+    }
+    .frame(width: 24, height: 24)
+    .accessibilityHidden(true)
+  }
+}
+
 private struct WidgetSurface<Content: View>: View {
   let reduceTransparency: Bool
   @ViewBuilder let content: Content
@@ -218,7 +232,7 @@ private struct AmbientGlow: View {
     }
     .frame(maxWidth: .infinity, maxHeight: .infinity)
     .allowsHitTesting(false)
-    .clipped()
+    .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
   }
 }
 
