@@ -8,6 +8,7 @@ readonly PRODUCT_NAME="CodexMeter"
 readonly SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
 readonly PROJECT_DIR="$(cd -- "$SCRIPT_DIR/.." && pwd)"
 readonly INFO_PLIST="$PROJECT_DIR/Resources/Info.plist"
+readonly APP_ICON="$PROJECT_DIR/Resources/AppIcon.icns"
 readonly XCODE_DEVELOPER_DIR="/Applications/Xcode.app/Contents/Developer"
 
 DIST_DIR="${DIST_DIR:-${HOME:?HOME is required}/Applications}"
@@ -25,6 +26,11 @@ fi
 
 if [[ ! -f "$INFO_PLIST" ]]; then
     echo "error: missing $INFO_PLIST" >&2
+    exit 1
+fi
+
+if [[ ! -s "$APP_ICON" ]]; then
+    echo "error: missing $APP_ICON; run ./Scripts/generate-icon.sh" >&2
     exit 1
 fi
 
@@ -62,8 +68,9 @@ trap cleanup EXIT
 mkdir -p "$STAGED_APP/Contents/MacOS" "$STAGED_APP/Contents/Resources"
 install -m 0755 "$EXECUTABLE" "$STAGED_APP/Contents/MacOS/$PRODUCT_NAME"
 install -m 0644 "$INFO_PLIST" "$STAGED_APP/Contents/Info.plist"
+install -m 0644 "$APP_ICON" "$STAGED_APP/Contents/Resources/AppIcon.icns"
 
-# Copy only compiled SwiftPM resource bundles. Source files, environment files,
+# Copy only the declared icon and compiled SwiftPM resource bundles. Source files,
 # credentials, and the user's Codex login state are never copied into the app.
 for resource_bundle in "$BIN_DIR"/*.bundle; do
     [[ -d "$resource_bundle" ]] || continue

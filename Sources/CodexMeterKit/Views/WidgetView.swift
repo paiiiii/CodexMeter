@@ -56,9 +56,9 @@ public struct WidgetView: View {
       }
       .frame(width: 24, height: 24)
 
-      Text("CODEX")
-        .font(.system(size: 11, weight: .semibold, design: .rounded))
-        .tracking(1.5)
+      Text("CODEXMETER")
+        .font(.system(size: 10, weight: .semibold, design: .rounded))
+        .tracking(1.15)
 
       Spacer(minLength: 8)
 
@@ -286,36 +286,47 @@ private struct QuotaRing: View {
   }
 
   var body: some View {
-    ZStack {
-      Circle()
-        .stroke(.primary.opacity(0.08), lineWidth: 7)
-      Circle()
-        .trim(from: 0, to: window == nil ? 0 : max(progress, 0.012))
-        .stroke(
-          AngularGradient(
-            colors: [accent.opacity(0.55), accent, .white.opacity(0.9)],
-            center: .center
-          ),
-          style: StrokeStyle(lineWidth: 7, lineCap: .round)
-        )
-        .rotationEffect(.degrees(-90))
-        .shadow(color: accent.opacity(0.18), radius: 5)
+    TimelineView(.periodic(from: .now, by: 60)) { context in
+      ZStack {
+        Circle()
+          .stroke(.primary.opacity(0.08), lineWidth: 7)
+        Circle()
+          .trim(from: 0, to: window == nil ? 0 : max(progress, 0.012))
+          .stroke(
+            AngularGradient(
+              colors: [accent.opacity(0.55), accent, .white.opacity(0.9)],
+              center: .center
+            ),
+            style: StrokeStyle(lineWidth: 7, lineCap: .round)
+          )
+          .rotationEffect(.degrees(-90))
+          .shadow(color: accent.opacity(0.18), radius: 5)
 
-      VStack(spacing: -1) {
-        Text(window == nil ? "—" : "\(remaining)%")
-          .font(.system(size: 24, weight: .semibold, design: .rounded))
-          .monospacedDigit()
-          .contentTransition(.numericText(value: Double(remaining)))
-        Text(MetricFormatter.shortQuotaLabel(for: window, fallback: "主要"))
-          .font(.system(size: 8, weight: .semibold, design: .rounded))
-          .tracking(0.8)
-          .foregroundStyle(.secondary)
+        VStack(spacing: 0) {
+          Text(window == nil ? "—" : "\(remaining)%")
+            .font(.system(size: 23, weight: .semibold, design: .rounded))
+            .monospacedDigit()
+            .contentTransition(.numericText(value: Double(remaining)))
+          Text(MetricFormatter.shortQuotaLabel(for: window, fallback: "主要"))
+            .font(.system(size: 8, weight: .semibold, design: .rounded))
+            .tracking(0.8)
+            .foregroundStyle(.secondary)
+          Text(MetricFormatter.compactResetCountdown(until: window?.resetsAt, now: context.date))
+            .font(.system(size: 8.5, weight: .medium, design: .monospaced))
+            .monospacedDigit()
+            .foregroundStyle(.secondary)
+            .lineLimit(1)
+            .minimumScaleFactor(0.9)
+            .frame(maxWidth: 70)
+        }
       }
+      .accessibilityElement(children: .ignore)
+      .accessibilityLabel(MetricFormatter.quotaLabel(for: window, fallback: "主要额度"))
+      .accessibilityValue(
+        MetricFormatter.quotaAccessibilityValue(for: window, now: context.date)
+      )
     }
     .animation(.smooth(duration: reduceMotion ? 0 : 0.48), value: remaining)
-    .accessibilityElement(children: .ignore)
-    .accessibilityLabel(MetricFormatter.quotaLabel(for: window, fallback: "主要额度"))
-    .accessibilityValue(MetricFormatter.quotaAccessibilityValue(for: window))
   }
 }
 
@@ -444,13 +455,10 @@ enum MetricFormatter {
     return "\(minutes)M 剩余"
   }
 
-  static func quotaAccessibilityValue(for window: QuotaWindow?) -> String {
+  static func quotaAccessibilityValue(for window: QuotaWindow?, now: Date = .now) -> String {
     guard let window else { return "尚无数据" }
-    var value = "剩余 \(window.remainingPercent) 百分比"
-    if let resetsAt = window.resetsAt {
-      value += "，\(resetsAt.formatted(date: .abbreviated, time: .shortened))重置"
-    }
-    return value
+    let countdown = resetCountdown(until: window.resetsAt, now: now)
+    return "剩余 \(window.remainingPercent) 百分比，\(countdown)"
   }
 
   static func compactTokens(_ value: Int64?) -> String {
@@ -483,6 +491,18 @@ enum MetricFormatter {
     if days > 0 { return "\(days)天 \(hours)时后重置" }
     if hours > 0 { return "\(hours)时 \(minutes)分后重置" }
     return "\(max(minutes, 1))分后重置"
+  }
+
+  static func compactResetCountdown(until date: Date?, now: Date) -> String {
+    guard let date else { return "等待同步" }
+    let seconds = max(0, Int(date.timeIntervalSince(now)))
+    guard seconds > 0 else { return "即将重置" }
+
+    let days = seconds / 86_400
+    let hours = (seconds % 86_400) / 3_600
+    let minutes = max((seconds % 3_600) / 60, hours == 0 ? 1 : 0)
+    if days > 0 { return String(format: "重置 %d天%02d时", days, hours) }
+    return String(format: "重置 %02d:%02d", hours, minutes)
   }
 
   private static func scaled(_ value: Double, suffix: String) -> String {
