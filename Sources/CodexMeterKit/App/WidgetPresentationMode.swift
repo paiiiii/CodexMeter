@@ -7,11 +7,11 @@ public enum WidgetPresentationMode: String, CaseIterable, Identifiable, Sendable
 
   public var id: String { rawValue }
 
-  public var title: String {
+  func localizedTitle(using localizer: AppLocalizer) -> String {
     switch self {
-    case .floating: "始终置顶"
-    case .desktop: "固定桌面"
-    case .hidden: "隐藏"
+    case .floating: localizer.string(.modeFloating)
+    case .desktop: localizer.string(.modeDesktop)
+    case .hidden: localizer.string(.modeHidden)
     }
   }
 

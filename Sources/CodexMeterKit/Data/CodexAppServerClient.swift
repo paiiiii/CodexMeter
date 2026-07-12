@@ -116,7 +116,7 @@ public actor CodexAppServerClient: UsageProviding {
         "clientInfo": [
           "name": "codex-meter",
           "title": "CodexMeter",
-          "version": "0.2.0",
+          "version": "0.3.0",
         ],
         "capabilities": [
           "experimentalApi": true,
@@ -292,8 +292,11 @@ public actor CodexAppServerClient: UsageProviding {
     request.timeoutTask.cancel()
 
     if let error = dictionary["error"] as? [String: Any] {
-      let message = error["message"] as? String ?? "未知 RPC 错误"
-      request.continuation.resume(throwing: CodexAppServerError.rpc(message))
+      if let message = error["message"] as? String {
+        request.continuation.resume(throwing: CodexAppServerError.rpc(message))
+      } else {
+        request.continuation.resume(throwing: CodexAppServerError.unknownRPC)
+      }
       return
     }
 

@@ -5,6 +5,8 @@ public struct MenuBarContent: View {
   private let store: UsageStore
   private let coordinator: WidgetWindowCoordinator
 
+  @Environment(LanguageController.self) private var languageController
+
   public init(store: UsageStore, coordinator: WidgetWindowCoordinator) {
     self.store = store
     self.coordinator = coordinator
@@ -26,7 +28,7 @@ public struct MenuBarContent: View {
         coordinator.setMode(mode)
       } label: {
         Label(
-          mode.title,
+          mode.localizedTitle(using: localizer),
           systemImage: coordinator.mode == mode ? "checkmark" : mode.systemImage
         )
       }
@@ -37,24 +39,32 @@ public struct MenuBarContent: View {
     Button {
       Task { await store.refresh() }
     } label: {
-      Label(store.isRefreshing ? "正在刷新…" : "立即刷新", systemImage: "arrow.clockwise")
+      Label(
+        localizer.string(store.isRefreshing ? .commonRefreshing : .commonRefreshNow),
+        systemImage: "arrow.clockwise"
+      )
     }
     .disabled(store.isRefreshing)
 
     if let error = store.lastErrorDescription {
-      Text("刷新失败 · 正在显示上次数据")
+      Text(localizer.string(.menuRefreshFailedCached))
         .help(error)
     } else if let fetchedAt = store.snapshot?.fetchedAt {
-      Text("已同步 · \(fetchedAt.formatted(date: .omitted, time: .shortened))")
+      Text(
+        localizer.format(
+          .menuSyncedFormat,
+          localizer.time(fetchedAt, includesSeconds: false)
+        )
+      )
     }
 
     SettingsLink {
-      Label("设置…", systemImage: "gearshape")
+      Label(localizer.string(.commonSettingsEllipsis), systemImage: "gearshape")
     }
 
     Divider()
 
-    Button("退出 CodexMeter") {
+    Button(localizer.string(.menuQuit)) {
       NSApplication.shared.terminate(nil)
     }
     .keyboardShortcut("q")
@@ -62,15 +72,21 @@ public struct MenuBarContent: View {
 
   private var primaryActionTitle: String {
     switch coordinator.mode {
-    case .hidden: "显示小组件"
-    case .desktop: "切换到始终置顶"
-    case .floating: "将小组件置于前方"
+    case .hidden: localizer.string(.menuShowWidget)
+    case .desktop: localizer.string(.menuSwitchAlwaysOnTop)
+    case .floating: localizer.string(.menuBringForward)
     }
+  }
+
+  private var localizer: AppLocalizer {
+    languageController.localizer
   }
 }
 
 public struct MenuBarLabel: View {
   private let store: UsageStore
+
+  @Environment(LanguageController.self) private var languageController
 
   public init(store: UsageStore) {
     self.store = store
@@ -87,16 +103,29 @@ public struct MenuBarLabel: View {
 
   private var menuBarAccessibilityValue: String {
     if store.lastErrorDescription != nil {
-      return "刷新失败，当前显示上次同步数据"
+      return localizer.string(.menuBarRefreshFailedAccessibility)
     }
-    guard let snapshot = store.snapshot else { return "尚未同步" }
+    guard let snapshot = store.snapshot else {
+      return localizer.string(.menuBarNotSyncedAccessibility)
+    }
     let quota =
-      snapshot.primary.map { "主要额度剩余 \($0.remainingPercent) 百分比" }
-      ?? "主要额度暂不可用"
+      snapshot.primary.map {
+        localizer.format(
+          .menuBarPrimaryRemainingFormat,
+          localizer.percent($0.remainingPercent)
+        )
+      }
+      ?? localizer.string(.menuBarPrimaryUnavailable)
     let tokens =
-      snapshot.todayTokens.map { "今日使用 \($0) Token" }
-      ?? "今日 Token 暂不可用"
-    return "\(quota)，\(tokens)"
+      snapshot.todayTokens.map {
+        localizer.format(.menuBarTodayTokensFormat, localizer.decimal($0))
+      }
+      ?? localizer.string(.menuBarTodayUnavailable)
+    return localizer.format(.menuBarSummaryFormat, quota, tokens)
+  }
+
+  private var localizer: AppLocalizer {
+    languageController.localizer
   }
 }
 

@@ -63,22 +63,29 @@ public enum CodexAppServerError: LocalizedError, Equatable, Sendable {
   case connectionClosed(Int32)
   case invalidMessage
   case rpc(String)
+  case unknownRPC
   case requestTimedOut
 
   public var errorDescription: String? {
+    localizedDescription(using: AppLocalizer(language: .english))
+  }
+
+  func localizedDescription(using localizer: AppLocalizer) -> String {
     switch self {
     case .binaryNotFound:
-      "找不到 Codex。请安装并登录 Codex/ChatGPT 桌面应用，或设置 CODEX_METER_CODEX_PATH。"
+      localizer.string(.errorBinaryNotFound)
     case .launchFailed(let reason):
-      "无法启动本机 Codex app-server：\(reason)"
+      localizer.format(.errorLaunchFailedFormat, reason)
     case .connectionClosed(let status):
-      "Codex app-server 已退出（状态 \(status)）。"
+      localizer.format(.errorConnectionClosedFormat, status)
     case .invalidMessage:
-      "Codex app-server 返回了无法识别的数据。"
+      localizer.string(.errorInvalidMessage)
     case .rpc(let message):
-      "Codex app-server：\(message)"
+      localizer.format(.errorRPCFormat, message)
+    case .unknownRPC:
+      localizer.format(.errorRPCFormat, localizer.string(.errorUnknownRPC))
     case .requestTimedOut:
-      "Codex 用量请求超时，请检查网络和登录状态。"
+      localizer.string(.errorRequestTimedOut)
     }
   }
 }

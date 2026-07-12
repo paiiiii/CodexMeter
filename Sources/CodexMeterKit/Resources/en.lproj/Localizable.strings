@@ -1,0 +1,110 @@
+"language.section" = "Language";
+"language.picker" = "App Language";
+"language.system" = "System Default";
+"language.english" = "English";
+"language.simplified_chinese" = "简体中文";
+
+"mode.floating" = "Always on Top";
+"mode.desktop" = "Desktop";
+"mode.hidden" = "Hidden";
+"mode.floating.description" = "Appears across Spaces and stays above regular windows.";
+"mode.desktop.description" = "Stays behind regular windows like a desktop widget.";
+"mode.hidden.description" = "Hides the widget; restore it anytime from the menu bar.";
+
+"settings.display.section" = "Display";
+"settings.widget_mode" = "Widget Mode";
+"settings.sync.section" = "Sync";
+"settings.refresh_interval" = "Refresh Interval";
+"interval.15_seconds" = "15 seconds";
+"interval.30_seconds" = "30 seconds";
+"interval.1_minute" = "1 minute";
+"interval.2_minutes" = "2 minutes";
+"interval.5_minutes" = "5 minutes";
+"settings.data_source" = "Data Source";
+"settings.waiting_for_codex" = "Waiting for Codex";
+"settings.local_app_server" = "Local Codex app-server";
+"common.refresh_now" = "Refresh Now";
+"settings.last_synced_format" = "Last synced %@";
+"settings.startup.section" = "Startup";
+"settings.launch_at_login" = "Launch at Login";
+"settings.open_login_items" = "Open Login Items Settings";
+"settings.privacy.section" = "Privacy";
+"settings.privacy.description" = "CodexMeter communicates only with the local Codex process. It does not read auth.json or upload or store your credentials. Quota and token data come from the official local Codex app-server.";
+
+"common.refreshing" = "Refreshing…";
+"common.settings" = "Settings";
+"common.settings_ellipsis" = "Settings…";
+"common.no_data" = "No data";
+
+"menu.show_widget" = "Show Widget";
+"menu.switch_always_on_top" = "Switch to Always on Top";
+"menu.bring_forward" = "Bring Widget Forward";
+"menu.refresh_failed_cached" = "Refresh failed · Showing last data";
+"menu.synced_format" = "Synced · %@";
+"menu.quit" = "Quit CodexMeter";
+"menubar.refresh_failed_accessibility" = "Refresh failed. Showing data from the last successful sync.";
+"menubar.not_synced_accessibility" = "Not synced yet";
+"menubar.primary_remaining_format" = "Primary limit %@ remaining";
+"menubar.primary_unavailable" = "Primary limit unavailable";
+"menubar.today_tokens_format" = "%@ tokens used today";
+"menubar.today_unavailable" = "Today's token usage unavailable";
+"menubar.summary_format" = "%@, %@";
+
+"widget.usage_accessibility" = "Codex usage";
+"widget.refresh_accessibility" = "Refresh Codex usage";
+"widget.today_tokens" = "TODAY'S TOKENS";
+"widget.reading_local_codex" = "Reading local Codex…";
+"widget.waiting_for_codex_data" = "Waiting for Codex data";
+"widget.today_unavailable" = "Today's tokens unavailable";
+"widget.open_settings" = "Open Settings";
+"widget.status.syncing" = "Syncing";
+"widget.status.offline" = "Offline";
+"widget.status.live" = "Live";
+"widget.status.connecting" = "Connecting";
+"widget.data_source_help" = "Data comes from the local Codex app-server";
+"widget.connection_status_accessibility" = "Connection status";
+
+"quota.primary" = "PRIMARY";
+"quota.primary_limit" = "Primary limit";
+"quota.secondary_limit" = "Secondary limit";
+"quota.remaining_format" = "%@ remaining";
+"quota.short_fallback_format" = "%@ LEFT";
+"quota.days.one" = "%d-day limit";
+"quota.days.other" = "%d-day limit";
+"quota.hours.one" = "%d-hour limit";
+"quota.hours.other" = "%d-hour limit";
+"quota.minutes.one" = "%d-minute limit";
+"quota.minutes.other" = "%d-minute limit";
+"quota.short_days_format" = "%dD LEFT";
+"quota.short_hours_format" = "%dH LEFT";
+"quota.short_minutes_format" = "%dM LEFT";
+"quota.accessibility_format" = "%@ remaining, %@";
+
+"reset.waiting_for_sync" = "Waiting for sync";
+"reset.soon" = "Resetting soon";
+"reset.minutes.one" = "Resets in %d minute";
+"reset.minutes.other" = "Resets in %d minutes";
+"reset.hours.one_minutes.one" = "Resets in %d hour %d minute";
+"reset.hours.one_minutes.other" = "Resets in %d hour %d minutes";
+"reset.hours.other_minutes.one" = "Resets in %d hours %d minute";
+"reset.hours.other_minutes.other" = "Resets in %d hours %d minutes";
+"reset.days.one_hours.one" = "Resets in %d day %d hour";
+"reset.days.one_hours.other" = "Resets in %d day %d hours";
+"reset.days.other_hours.one" = "Resets in %d days %d hour";
+"reset.days.other_hours.other" = "Resets in %d days %d hours";
+"reset.compact_clock_format" = "Reset %02d:%02d";
+"reset.compact_days_format" = "Reset %dd%02dh";
+
+"error.binary_not_found" = "Codex could not be found. Install and sign in to the Codex or ChatGPT desktop app, or set CODEX_METER_CODEX_PATH.";
+"error.launch_failed_format" = "The local Codex app-server could not start: %@";
+"error.connection_closed_format" = "The Codex app-server exited with status %d.";
+"error.invalid_message" = "The Codex app-server returned data that could not be recognized.";
+"error.rpc_format" = "Codex app-server: %@";
+"error.request_timed_out" = "The Codex usage request timed out. Check your network connection and sign-in status.";
+"error.unknown_rpc" = "Unknown RPC error";
+
+"login.registered_requires_approval" = "CodexMeter is registered but still needs approval in System Settings → Login Items.";
+"login.approval_required" = "Approve CodexMeter in Login Items in System Settings.";
+"login.bundle_unavailable" = "This app bundle cannot be registered as a login item. Install CodexMeter in a stable location first.";
+"login.unknown_status" = "The login item status could not be read. Check it in System Settings.";
+

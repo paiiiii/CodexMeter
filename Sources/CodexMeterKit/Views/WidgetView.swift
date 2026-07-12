@@ -7,6 +7,7 @@ public struct WidgetView: View {
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+  @Environment(LanguageController.self) private var languageController
   @State private var isHovering = false
 
   public init(store: UsageStore, coordinator: WidgetWindowCoordinator) {
@@ -43,7 +44,7 @@ public struct WidgetView: View {
       }
     }
     .accessibilityElement(children: .contain)
-    .accessibilityLabel("Codex 使用情况")
+    .accessibilityLabel(localizer.string(.widgetUsageAccessibility))
   }
 
   private var header: some View {
@@ -76,8 +77,8 @@ public struct WidgetView: View {
       }
       .buttonStyle(.plain)
       .disabled(store.isRefreshing)
-      .help("立即刷新")
-      .accessibilityLabel("立即刷新 Codex 用量")
+      .help(localizer.string(.commonRefreshNow))
+      .accessibilityLabel(localizer.string(.widgetRefreshAccessibility))
     }
     .frame(height: 24)
   }
@@ -88,7 +89,12 @@ public struct WidgetView: View {
         .frame(width: 88, height: 88)
 
       VStack(alignment: .leading, spacing: 2) {
-        Text(MetricFormatter.compactTokens(store.snapshot?.todayTokens))
+        Text(
+          MetricFormatter.compactTokens(
+            store.snapshot?.todayTokens,
+            localizer: localizer
+          )
+        )
           .font(.system(size: 31, weight: .medium, design: .rounded))
           .monospacedDigit()
           .lineLimit(1)
@@ -97,13 +103,13 @@ public struct WidgetView: View {
             .numericText(value: Double(store.snapshot?.todayTokens ?? 0))
           )
 
-        Text("今日 TOKEN")
+        Text(localizer.string(.widgetTodayTokens))
           .font(.system(size: 9, weight: .semibold, design: .rounded))
           .tracking(1.2)
           .foregroundStyle(.secondary)
 
         if let tokens = store.snapshot?.todayTokens {
-          Text(MetricFormatter.exactTokens(tokens))
+          Text(MetricFormatter.exactTokens(tokens, localizer: localizer))
             .font(.system(size: 10, weight: .medium, design: .monospaced))
             .foregroundStyle(.secondary)
             .padding(.top, 5)
@@ -111,8 +117,10 @@ public struct WidgetView: View {
         } else {
           Text(
             store.snapshot == nil
-              ? (store.isRefreshing ? "正在读取本地 Codex…" : "等待 Codex 数据")
-              : "今日 Token 暂不可用"
+              ? localizer.string(
+                store.isRefreshing ? .widgetReadingLocalCodex : .widgetWaitingForCodexData
+              )
+              : localizer.string(.widgetTodayUnavailable)
           )
           .font(.system(size: 10))
           .foregroundStyle(.secondary)
@@ -122,9 +130,11 @@ public struct WidgetView: View {
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       .accessibilityElement(children: .ignore)
-      .accessibilityLabel("今日 Token")
+      .accessibilityLabel(localizer.string(.widgetTodayTokens))
       .accessibilityValue(
-        store.snapshot?.todayTokens.map(MetricFormatter.exactTokens) ?? "尚无数据"
+        store.snapshot?.todayTokens.map {
+          MetricFormatter.exactTokens($0, localizer: localizer)
+        } ?? localizer.string(.commonNoData)
       )
     }
     .frame(height: 88)
@@ -157,11 +167,15 @@ public struct WidgetView: View {
           .background(.primary.opacity(isHovering ? 0.09 : 0.05), in: Circle())
       }
       .buttonStyle(.plain)
-      .help("设置")
-      .accessibilityLabel("打开设置")
+      .help(localizer.string(.commonSettings))
+      .accessibilityLabel(localizer.string(.widgetOpenSettings))
     }
     .frame(height: 26)
     .opacity(isHovering ? 1 : 0.9)
+  }
+
+  private var localizer: AppLocalizer {
+    languageController.localizer
   }
 }
 
@@ -221,19 +235,20 @@ private struct LiveStatusView: View {
   let store: UsageStore
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @Environment(LanguageController.self) private var languageController
   @State private var isPulsing = false
 
   private var status: (title: String, color: Color) {
     if store.isRefreshing {
-      return ("同步中", .secondary)
+      return (localizer.string(.widgetStatusSyncing), .secondary)
     }
     if store.lastErrorDescription != nil {
-      return ("离线", .orange)
+      return (localizer.string(.widgetStatusOffline), .orange)
     }
     if store.snapshot != nil {
-      return ("实时", .mint)
+      return (localizer.string(.widgetStatusLive), .mint)
     }
-    return ("连接中", .secondary)
+    return (localizer.string(.widgetStatusConnecting), .secondary)
   }
 
   var body: some View {
@@ -250,7 +265,7 @@ private struct LiveStatusView: View {
     .padding(.horizontal, 8)
     .frame(height: 22)
     .background(.primary.opacity(0.055), in: Capsule())
-    .help(store.lastErrorDescription ?? "数据来自本机 Codex app-server")
+    .help(store.lastErrorDescription ?? localizer.string(.widgetDataSourceHelp))
     .onAppear {
       guard !reduceMotion else { return }
       withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
@@ -258,8 +273,12 @@ private struct LiveStatusView: View {
       }
     }
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel("连接状态")
+    .accessibilityLabel(localizer.string(.widgetConnectionStatusAccessibility))
     .accessibilityValue(status.title)
+  }
+
+  private var localizer: AppLocalizer {
+    languageController.localizer
   }
 }
 
@@ -267,6 +286,7 @@ private struct QuotaRing: View {
   let window: QuotaWindow?
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @Environment(LanguageController.self) private var languageController
 
   private var remaining: Int { window?.remainingPercent ?? 0 }
   private var progress: Double { Double(remaining) / 100 }
@@ -298,15 +318,27 @@ private struct QuotaRing: View {
           .shadow(color: accent.opacity(0.18), radius: 5)
 
         VStack(spacing: 0) {
-          Text(window == nil ? "—" : "\(remaining)%")
+          Text(window == nil ? "—" : localizer.percent(remaining))
             .font(.system(size: 23, weight: .semibold, design: .rounded))
             .monospacedDigit()
             .contentTransition(.numericText(value: Double(remaining)))
-          Text(MetricFormatter.shortQuotaLabel(for: window, fallback: "主要"))
+          Text(
+            MetricFormatter.shortQuotaLabel(
+              for: window,
+              fallback: .quotaPrimary,
+              localizer: localizer
+            )
+          )
             .font(.system(size: 8, weight: .semibold, design: .rounded))
             .tracking(0.8)
             .foregroundStyle(.secondary)
-          Text(MetricFormatter.compactResetCountdown(until: window?.resetsAt, now: context.date))
+          Text(
+            MetricFormatter.compactResetCountdown(
+              until: window?.resetsAt,
+              now: context.date,
+              localizer: localizer
+            )
+          )
             .font(.system(size: 8.5, weight: .medium, design: .monospaced))
             .monospacedDigit()
             .foregroundStyle(.secondary)
@@ -316,12 +348,26 @@ private struct QuotaRing: View {
         }
       }
       .accessibilityElement(children: .ignore)
-      .accessibilityLabel(MetricFormatter.quotaLabel(for: window, fallback: "主要额度"))
+      .accessibilityLabel(
+        MetricFormatter.quotaLabel(
+          for: window,
+          fallback: .quotaPrimaryLimit,
+          localizer: localizer
+        )
+      )
       .accessibilityValue(
-        MetricFormatter.quotaAccessibilityValue(for: window, now: context.date)
+        MetricFormatter.quotaAccessibilityValue(
+          for: window,
+          now: context.date,
+          localizer: localizer
+        )
       )
     }
     .animation(.smooth(duration: reduceMotion ? 0 : 0.48), value: remaining)
+  }
+
+  private var localizer: AppLocalizer {
+    languageController.localizer
   }
 }
 
@@ -329,6 +375,7 @@ private struct QuotaBar: View {
   let window: QuotaWindow?
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
+  @Environment(LanguageController.self) private var languageController
 
   private var remaining: Int { window?.remainingPercent ?? 0 }
   private var progress: Double { Double(remaining) / 100 }
@@ -336,9 +383,19 @@ private struct QuotaBar: View {
   var body: some View {
     VStack(spacing: 5) {
       HStack(spacing: 6) {
-        Text(MetricFormatter.quotaLabel(for: window, fallback: "次要额度"))
+        Text(
+          MetricFormatter.quotaLabel(
+            for: window,
+            fallback: .quotaSecondaryLimit,
+            localizer: localizer
+          )
+        )
           .font(.system(size: 10, weight: .medium))
-        Text(window == nil ? "—" : "剩余 \(remaining)%")
+        Text(
+          window == nil
+            ? "—"
+            : localizer.format(.quotaRemainingFormat, localizer.percent(remaining))
+        )
           .font(.system(size: 10, weight: .semibold, design: .rounded))
           .monospacedDigit()
           .contentTransition(.numericText(value: Double(remaining)))
@@ -368,17 +425,37 @@ private struct QuotaBar: View {
     }
     .animation(.smooth(duration: reduceMotion ? 0 : 0.48), value: remaining)
     .accessibilityElement(children: .ignore)
-    .accessibilityLabel(MetricFormatter.quotaLabel(for: window, fallback: "次要额度"))
-    .accessibilityValue(MetricFormatter.quotaAccessibilityValue(for: window))
+    .accessibilityLabel(
+      MetricFormatter.quotaLabel(
+        for: window,
+        fallback: .quotaSecondaryLimit,
+        localizer: localizer
+      )
+    )
+    .accessibilityValue(
+      MetricFormatter.quotaAccessibilityValue(for: window, localizer: localizer)
+    )
+  }
+
+  private var localizer: AppLocalizer {
+    languageController.localizer
   }
 }
 
 private struct ResetCountdownView: View {
   let date: Date?
 
+  @Environment(LanguageController.self) private var languageController
+
   var body: some View {
     TimelineView(.periodic(from: .now, by: 60)) { context in
-      Text(MetricFormatter.resetCountdown(until: date, now: context.date))
+      Text(
+        MetricFormatter.resetCountdown(
+          until: date,
+          now: context.date,
+          localizer: languageController.localizer
+        )
+      )
         .font(.system(size: 9, weight: .medium, design: .monospaced))
         .monospacedDigit()
     }
@@ -391,13 +468,15 @@ private struct ModeButton: View {
   let showsTitle: Bool
   let action: () -> Void
 
+  @Environment(LanguageController.self) private var languageController
+
   var body: some View {
     Button(action: action) {
       HStack(spacing: 5) {
         Image(systemName: mode.systemImage)
           .font(.system(size: 10, weight: .semibold))
         if showsTitle {
-          Text(mode.title)
+          Text(mode.localizedTitle(using: localizer))
             .font(.system(size: 10, weight: .medium))
             .transition(.opacity.combined(with: .move(edge: .leading)))
         }
@@ -417,93 +496,163 @@ private struct ModeButton: View {
       .contentShape(Capsule())
     }
     .buttonStyle(.plain)
-    .help(mode.title)
-    .accessibilityLabel(mode.title)
+    .help(mode.localizedTitle(using: localizer))
+    .accessibilityLabel(mode.localizedTitle(using: localizer))
     .accessibilityAddTraits(isSelected ? .isSelected : [])
+  }
+
+  private var localizer: AppLocalizer {
+    languageController.localizer
   }
 }
 
 enum MetricFormatter {
-  static func quotaLabel(for window: QuotaWindow?, fallback: String) -> String {
+  static func quotaLabel(
+    for window: QuotaWindow?,
+    fallback: L10nKey,
+    localizer: AppLocalizer
+  ) -> String {
     guard let minutes = window?.windowDurationMinutes, minutes > 0 else {
-      return fallback
+      return localizer.string(fallback)
     }
     if minutes.isMultiple(of: 1_440) {
-      return "\(minutes / 1_440) 天额度"
+      let days = minutes / 1_440
+      return localizer.format(days == 1 ? .quotaDaysOne : .quotaDaysOther, days)
     }
     if minutes.isMultiple(of: 60) {
-      return "\(minutes / 60) 小时额度"
+      let hours = minutes / 60
+      return localizer.format(hours == 1 ? .quotaHoursOne : .quotaHoursOther, hours)
     }
-    return "\(minutes) 分钟额度"
+    return localizer.format(minutes == 1 ? .quotaMinutesOne : .quotaMinutesOther, minutes)
   }
 
-  static func shortQuotaLabel(for window: QuotaWindow?, fallback: String) -> String {
+  static func shortQuotaLabel(
+    for window: QuotaWindow?,
+    fallback: L10nKey,
+    localizer: AppLocalizer
+  ) -> String {
     guard let minutes = window?.windowDurationMinutes, minutes > 0 else {
-      return "\(fallback)剩余"
+      return localizer.format(.quotaShortFallbackFormat, localizer.string(fallback))
     }
     if minutes.isMultiple(of: 1_440) {
-      return "\(minutes / 1_440)D 剩余"
+      return localizer.format(.quotaShortDaysFormat, minutes / 1_440)
     }
     if minutes.isMultiple(of: 60) {
-      return "\(minutes / 60)H 剩余"
+      return localizer.format(.quotaShortHoursFormat, minutes / 60)
     }
-    return "\(minutes)M 剩余"
+    return localizer.format(.quotaShortMinutesFormat, minutes)
   }
 
-  static func quotaAccessibilityValue(for window: QuotaWindow?, now: Date = .now) -> String {
-    guard let window else { return "尚无数据" }
-    let countdown = resetCountdown(until: window.resetsAt, now: now)
-    return "剩余 \(window.remainingPercent) 百分比，\(countdown)"
+  static func quotaAccessibilityValue(
+    for window: QuotaWindow?,
+    now: Date = .now,
+    localizer: AppLocalizer
+  ) -> String {
+    guard let window else { return localizer.string(.commonNoData) }
+    let countdown = resetCountdown(
+      until: window.resetsAt,
+      now: now,
+      localizer: localizer
+    )
+    return localizer.format(
+      .quotaAccessibilityFormat,
+      localizer.percent(window.remainingPercent),
+      countdown
+    )
   }
 
-  static func compactTokens(_ value: Int64?) -> String {
+  static func compactTokens(_ value: Int64?, localizer: AppLocalizer) -> String {
     guard let value else { return "—" }
     let magnitude = Double(value)
     switch magnitude {
     case 1_000_000_000...:
-      return scaled(magnitude / 1_000_000_000, suffix: "B")
+      return scaled(magnitude / 1_000_000_000, suffix: "B", localizer: localizer)
     case 1_000_000...:
-      return scaled(magnitude / 1_000_000, suffix: "M")
+      return scaled(magnitude / 1_000_000, suffix: "M", localizer: localizer)
     case 1_000...:
-      return scaled(magnitude / 1_000, suffix: "K")
+      return scaled(magnitude / 1_000, suffix: "K", localizer: localizer)
     default:
-      return value.formatted()
+      return localizer.decimal(value)
     }
   }
 
-  static func exactTokens(_ value: Int64) -> String {
-    value.formatted(.number.grouping(.automatic))
+  static func exactTokens(_ value: Int64, localizer: AppLocalizer) -> String {
+    localizer.decimal(value)
   }
 
-  static func resetCountdown(until date: Date?, now: Date) -> String {
-    guard let date else { return "等待同步" }
+  static func resetCountdown(
+    until date: Date?,
+    now: Date,
+    localizer: AppLocalizer
+  ) -> String {
+    guard let date else { return localizer.string(.resetWaitingForSync) }
     let seconds = max(0, Int(date.timeIntervalSince(now)))
-    guard seconds > 0 else { return "即将重置" }
+    guard seconds > 0 else { return localizer.string(.resetSoon) }
 
     let days = seconds / 86_400
     let hours = (seconds % 86_400) / 3_600
     let minutes = (seconds % 3_600) / 60
-    if days > 0 { return "\(days)天 \(hours)时后重置" }
-    if hours > 0 { return "\(hours)时 \(minutes)分后重置" }
-    return "\(max(minutes, 1))分后重置"
+    if days > 0 {
+      let key: L10nKey
+      switch (days == 1, hours == 1) {
+      case (true, true): key = .resetDaysOneHoursOne
+      case (true, false): key = .resetDaysOneHoursOther
+      case (false, true): key = .resetDaysOtherHoursOne
+      case (false, false): key = .resetDaysOtherHoursOther
+      }
+      return localizer.format(key, days, hours)
+    }
+    if hours > 0 {
+      let key: L10nKey
+      switch (hours == 1, minutes == 1) {
+      case (true, true): key = .resetHoursOneMinutesOne
+      case (true, false): key = .resetHoursOneMinutesOther
+      case (false, true): key = .resetHoursOtherMinutesOne
+      case (false, false): key = .resetHoursOtherMinutesOther
+      }
+      return localizer.format(key, hours, minutes)
+    }
+    let visibleMinutes = max(minutes, 1)
+    return localizer.format(
+      visibleMinutes == 1 ? .resetMinutesOne : .resetMinutesOther,
+      visibleMinutes
+    )
   }
 
-  static func compactResetCountdown(until date: Date?, now: Date) -> String {
-    guard let date else { return "等待同步" }
+  static func compactResetCountdown(
+    until date: Date?,
+    now: Date,
+    localizer: AppLocalizer
+  ) -> String {
+    guard let date else { return localizer.string(.resetWaitingForSync) }
     let seconds = max(0, Int(date.timeIntervalSince(now)))
-    guard seconds > 0 else { return "即将重置" }
+    guard seconds > 0 else { return localizer.string(.resetSoon) }
 
     let days = seconds / 86_400
     let hours = (seconds % 86_400) / 3_600
     let minutes = max((seconds % 3_600) / 60, hours == 0 ? 1 : 0)
-    if days > 0 { return String(format: "重置 %d天%02d时", days, hours) }
-    return String(format: "重置 %02d:%02d", hours, minutes)
+    if days > 0 {
+      return localizer.format(.resetCompactDaysFormat, days, hours)
+    }
+    return localizer.format(.resetCompactClockFormat, hours, minutes)
   }
 
-  private static func scaled(_ value: Double, suffix: String) -> String {
+  private static func scaled(
+    _ value: Double,
+    suffix: String,
+    localizer: AppLocalizer
+  ) -> String {
     if value >= 100 {
-      return value.formatted(.number.precision(.fractionLength(0))) + suffix
+      return value.formatted(
+        .number
+          .precision(.fractionLength(0))
+          .locale(localizer.locale)
+      ) + suffix
     }
-    return value.formatted(.number.precision(.fractionLength(1))) + suffix
+    return value.formatted(
+      .number
+        .precision(.fractionLength(1))
+        .locale(localizer.locale)
+    ) + suffix
   }
 }

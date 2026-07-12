@@ -1,0 +1,110 @@
+"language.section" = "语言";
+"language.picker" = "应用语言";
+"language.system" = "跟随系统";
+"language.english" = "English";
+"language.simplified_chinese" = "简体中文";
+
+"mode.floating" = "始终置顶";
+"mode.desktop" = "固定桌面";
+"mode.hidden" = "隐藏";
+"mode.floating.description" = "跨桌面空间显示，并保持在普通窗口上方。";
+"mode.desktop.description" = "固定在普通窗口后方，像桌面插件一样显示。";
+"mode.hidden.description" = "隐藏小组件；可随时从菜单栏恢复。";
+
+"settings.display.section" = "显示";
+"settings.widget_mode" = "小组件模式";
+"settings.sync.section" = "同步";
+"settings.refresh_interval" = "刷新频率";
+"interval.15_seconds" = "15 秒";
+"interval.30_seconds" = "30 秒";
+"interval.1_minute" = "1 分钟";
+"interval.2_minutes" = "2 分钟";
+"interval.5_minutes" = "5 分钟";
+"settings.data_source" = "数据源";
+"settings.waiting_for_codex" = "等待 Codex";
+"settings.local_app_server" = "本机 Codex app-server";
+"common.refresh_now" = "立即刷新";
+"settings.last_synced_format" = "上次同步 %@";
+"settings.startup.section" = "启动";
+"settings.launch_at_login" = "登录时自动启动";
+"settings.open_login_items" = "打开登录项设置";
+"settings.privacy.section" = "隐私";
+"settings.privacy.description" = "CodexMeter 只与本机 Codex 进程通信，不读取 auth.json，也不会上传或保存你的凭证。额度和 Token 数据由 Codex 官方本地 app-server 返回。";
+
+"common.refreshing" = "正在刷新…";
+"common.settings" = "设置";
+"common.settings_ellipsis" = "设置…";
+"common.no_data" = "尚无数据";
+
+"menu.show_widget" = "显示小组件";
+"menu.switch_always_on_top" = "切换到始终置顶";
+"menu.bring_forward" = "将小组件置于前方";
+"menu.refresh_failed_cached" = "刷新失败 · 正在显示上次数据";
+"menu.synced_format" = "已同步 · %@";
+"menu.quit" = "退出 CodexMeter";
+"menubar.refresh_failed_accessibility" = "刷新失败，当前显示上次同步数据";
+"menubar.not_synced_accessibility" = "尚未同步";
+"menubar.primary_remaining_format" = "主要额度剩余 %@";
+"menubar.primary_unavailable" = "主要额度暂不可用";
+"menubar.today_tokens_format" = "今日使用 %@ Token";
+"menubar.today_unavailable" = "今日 Token 暂不可用";
+"menubar.summary_format" = "%@，%@";
+
+"widget.usage_accessibility" = "Codex 使用情况";
+"widget.refresh_accessibility" = "立即刷新 Codex 用量";
+"widget.today_tokens" = "今日 TOKEN";
+"widget.reading_local_codex" = "正在读取本地 Codex…";
+"widget.waiting_for_codex_data" = "等待 Codex 数据";
+"widget.today_unavailable" = "今日 Token 暂不可用";
+"widget.open_settings" = "打开设置";
+"widget.status.syncing" = "同步中";
+"widget.status.offline" = "离线";
+"widget.status.live" = "实时";
+"widget.status.connecting" = "连接中";
+"widget.data_source_help" = "数据来自本机 Codex app-server";
+"widget.connection_status_accessibility" = "连接状态";
+
+"quota.primary" = "主要";
+"quota.primary_limit" = "主要额度";
+"quota.secondary_limit" = "次要额度";
+"quota.remaining_format" = "剩余 %@";
+"quota.short_fallback_format" = "%@剩余";
+"quota.days.one" = "%d 天额度";
+"quota.days.other" = "%d 天额度";
+"quota.hours.one" = "%d 小时额度";
+"quota.hours.other" = "%d 小时额度";
+"quota.minutes.one" = "%d 分钟额度";
+"quota.minutes.other" = "%d 分钟额度";
+"quota.short_days_format" = "%dD 剩余";
+"quota.short_hours_format" = "%dH 剩余";
+"quota.short_minutes_format" = "%dM 剩余";
+"quota.accessibility_format" = "剩余 %@，%@";
+
+"reset.waiting_for_sync" = "等待同步";
+"reset.soon" = "即将重置";
+"reset.minutes.one" = "%d分后重置";
+"reset.minutes.other" = "%d分后重置";
+"reset.hours.one_minutes.one" = "%d时 %d分后重置";
+"reset.hours.one_minutes.other" = "%d时 %d分后重置";
+"reset.hours.other_minutes.one" = "%d时 %d分后重置";
+"reset.hours.other_minutes.other" = "%d时 %d分后重置";
+"reset.days.one_hours.one" = "%d天 %d时后重置";
+"reset.days.one_hours.other" = "%d天 %d时后重置";
+"reset.days.other_hours.one" = "%d天 %d时后重置";
+"reset.days.other_hours.other" = "%d天 %d时后重置";
+"reset.compact_clock_format" = "重置 %02d:%02d";
+"reset.compact_days_format" = "重置 %d天%02d时";
+
+"error.binary_not_found" = "找不到 Codex。请安装并登录 Codex/ChatGPT 桌面应用，或设置 CODEX_METER_CODEX_PATH。";
+"error.launch_failed_format" = "无法启动本机 Codex app-server：%@";
+"error.connection_closed_format" = "Codex app-server 已退出（状态 %d）。";
+"error.invalid_message" = "Codex app-server 返回了无法识别的数据。";
+"error.rpc_format" = "Codex app-server：%@";
+"error.request_timed_out" = "Codex 用量请求超时，请检查网络和登录状态。";
+"error.unknown_rpc" = "未知 RPC 错误";
+
+"login.registered_requires_approval" = "CodexMeter 已注册，但仍需要你在“系统设置 → 登录项”中批准。";
+"login.approval_required" = "请在系统设置的登录项中批准 CodexMeter。";
+"login.bundle_unavailable" = "当前应用包无法注册为登录项，请先把 CodexMeter 安装到稳定位置。";
+"login.unknown_status" = "无法读取登录项状态，请在系统设置中检查。";
+
