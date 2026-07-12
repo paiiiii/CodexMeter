@@ -1,12 +1,14 @@
 import AppKit
 
 enum CodexMeterResources {
+  static var bundle: Bundle { .module }
+
   static var markURL: URL? {
-    Bundle.module.url(forResource: "CodexMeterMark", withExtension: "png")
+    bundle.url(forResource: "CodexMeterMark", withExtension: "png")
   }
 
   static var menuBarMarkURL: URL? {
-    Bundle.module.url(forResource: "CodexMeterMenuBarMark", withExtension: "png")
+    bundle.url(forResource: "CodexMeterMenuBarMark", withExtension: "png")
   }
 
   static func brandImage(forMenuBar: Bool) -> NSImage? {

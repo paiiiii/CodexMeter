@@ -22,6 +22,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   private static let widgetSize = NSSize(width: 348, height: 238)
 
   private let store: UsageStore
+  private let languageController: LanguageController
   private let defaults: UserDefaults
   private var lastVisibleMode: WidgetPresentationMode
   private var hasStarted = false
@@ -30,8 +31,13 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   @ObservationIgnored
   private lazy var panel: CodexMeterPanel = makePanel()
 
-  public init(store: UsageStore, defaults: UserDefaults = .standard) {
+  public init(
+    store: UsageStore,
+    languageController: LanguageController,
+    defaults: UserDefaults = .standard
+  ) {
     self.store = store
+    self.languageController = languageController
     self.defaults = defaults
 
     let savedMode =
@@ -120,6 +126,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     panel.contentView = NSHostingView(
       rootView: WidgetView(store: store, coordinator: self)
         .frame(width: Self.widgetSize.width, height: Self.widgetSize.height)
+        .codexMeterLanguage(languageController)
     )
     panel.contentView?.wantsLayer = true
     panel.contentView?.layer?.backgroundColor = .clear

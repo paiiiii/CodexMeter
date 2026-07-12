@@ -6,8 +6,15 @@ import Observation
 public final class UsageStore {
   public private(set) var snapshot: UsageSnapshot?
   public private(set) var isRefreshing = false
-  public private(set) var lastErrorDescription: String?
   public private(set) var isWidgetVisible = true
+
+  public var lastErrorDescription: String? {
+    guard let lastError else { return nil }
+    if let error = lastError as? CodexAppServerError {
+      return error.localizedDescription(using: languageController.localizer)
+    }
+    return lastError.localizedDescription
+  }
 
   public var refreshInterval: TimeInterval {
     didSet {
@@ -22,15 +29,19 @@ public final class UsageStore {
   }
 
   private let provider: any UsageProviding
+  private let languageController: LanguageController
   private let defaults: UserDefaults
+  private var lastError: (any Error)?
   private var pollingTask: Task<Void, Never>?
   private var hasStarted = false
 
   public init(
     provider: any UsageProviding,
+    languageController: LanguageController,
     defaults: UserDefaults = .standard
   ) {
     self.provider = provider
+    self.languageController = languageController
     self.defaults = defaults
     let storedInterval = defaults.double(forKey: Keys.refreshInterval)
     refreshInterval = storedInterval == 0 ? 30 : min(max(storedInterval, 15), 300)
@@ -68,11 +79,11 @@ public final class UsageStore {
       let nextSnapshot = try await provider.fetchUsage()
       guard !Task.isCancelled else { return }
       snapshot = nextSnapshot
-      lastErrorDescription = nil
+      lastError = nil
     } catch is CancellationError {
       return
     } catch {
-      lastErrorDescription = error.localizedDescription
+      lastError = error
     }
   }
 

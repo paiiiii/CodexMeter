@@ -1,6 +1,6 @@
 # CodexMeter Status Bar Logo Size QA
 
-- Source visual truth: `/var/folders/26/1jhmqmk9267cy_p2r59v5cd00000gn/T/TemporaryItems/NSIRD_screencaptureui_em964j/Screenshot 2026-07-11 at 9.43.39 PM.png`
+- Source visual truth: user-provided status-bar crop archived in `QA/menu-bar-badge-small-comparison.png`
 - Implementation screenshot: `QA/menu-bar-badge-small.png`
 - Viewport: source status-bar crop 152x145 px; production badge rendered at native 2x scale as 83x44 px
 - State: normal account state with `5%` remaining; macOS light/tinted menu bar appearance
@@ -26,8 +26,8 @@ No actionable P0, P1, or P2 differences remain for the requested status-bar logo
 ## Interaction and Runtime Checks
 
 - The production `MenuBarBadge` rendered successfully at native 2x status-bar scale.
-- The full Swift test suite passed: 20 tests executed, 1 live integration test skipped by default, 0 failures.
-- The Release app was rebuilt, ad-hoc signed, installed at `/Users/paiii/Applications/CodexMeter.app`, and relaunched.
+- At the time of this logo QA, the full Swift test suite passed: 20 tests executed, 1 live integration test skipped by default, 0 failures.
+- The Release app was rebuilt, ad-hoc signed, installed at `~/Applications/CodexMeter.app`, and relaunched.
 - This is a native macOS component; browser and browser-console checks are not applicable.
 
 ## Follow-up Polish

@@ -2,14 +2,22 @@ import AppKit
 
 @MainActor
 public final class CodexMeterAppDelegate: NSObject, NSApplicationDelegate {
+  public let languageController: LanguageController
   public let store: UsageStore
   public let loginItemController: LoginItemController
-  public lazy var windowCoordinator = WidgetWindowCoordinator(store: store)
+  public lazy var windowCoordinator = WidgetWindowCoordinator(
+    store: store,
+    languageController: languageController
+  )
   private var isTerminating = false
 
   public override init() {
-    store = UsageStore(provider: CodexAppServerClient())
-    loginItemController = LoginItemController()
+    languageController = LanguageController()
+    store = UsageStore(
+      provider: CodexAppServerClient(),
+      languageController: languageController
+    )
+    loginItemController = LoginItemController(languageController: languageController)
     super.init()
   }
 

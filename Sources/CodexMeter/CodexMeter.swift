@@ -13,8 +13,10 @@ struct CodexMeterApplication: App {
         store: appDelegate.store,
         coordinator: appDelegate.windowCoordinator
       )
+      .codexMeterLanguage(appDelegate.languageController)
     } label: {
       MenuBarLabel(store: appDelegate.store)
+        .codexMeterLanguage(appDelegate.languageController)
     }
     .menuBarExtraStyle(.menu)
 
@@ -24,6 +26,7 @@ struct CodexMeterApplication: App {
         coordinator: appDelegate.windowCoordinator,
         loginItemController: appDelegate.loginItemController
       )
+      .codexMeterLanguage(appDelegate.languageController)
     }
   }
 }

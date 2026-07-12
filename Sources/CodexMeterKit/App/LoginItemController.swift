@@ -6,18 +6,25 @@ import ServiceManagement
 @Observable
 public final class LoginItemController {
   public private(set) var isEnabled = false
-  public private(set) var errorDescription: String?
   public private(set) var status = SMAppService.Status.notRegistered
 
-  public init() {
+  public var errorDescription: String? {
+    issue?.localizedDescription(using: languageController.localizer)
+  }
+
+  private let languageController: LanguageController
+  private var issue: LoginItemIssue?
+
+  public init(languageController: LanguageController) {
+    self.languageController = languageController
     refresh()
   }
 
   public func refresh() {
     updateStatus()
-    errorDescription =
+    issue =
       status == .requiresApproval
-      ? "CodexMeter 已注册，但仍需要你在“系统设置 → 登录项”中批准。"
+      ? .registeredRequiresApproval
       : nil
   }
 
@@ -29,14 +36,16 @@ public final class LoginItemController {
         case .notRegistered:
           try SMAppService.mainApp.register()
         case .requiresApproval:
-          errorDescription = "请在系统设置的登录项中批准 CodexMeter。"
+          issue = .approvalRequired
           return
         case .enabled:
           return
         case .notFound:
-          throw LoginItemError.appBundleUnavailable
+          issue = .bundleUnavailable
+          return
         @unknown default:
-          throw LoginItemError.unknownStatus
+          issue = .unknownStatus
+          return
         }
       } else if status != .notRegistered {
         try SMAppService.mainApp.unregister()
@@ -44,7 +53,7 @@ public final class LoginItemController {
       refresh()
     } catch {
       updateStatus()
-      errorDescription = error.localizedDescription
+      issue = .system(error.localizedDescription)
     }
   }
 
@@ -58,16 +67,25 @@ public final class LoginItemController {
   }
 }
 
-private enum LoginItemError: LocalizedError {
-  case appBundleUnavailable
+private enum LoginItemIssue {
+  case registeredRequiresApproval
+  case approvalRequired
+  case bundleUnavailable
   case unknownStatus
+  case system(String)
 
-  var errorDescription: String? {
+  func localizedDescription(using localizer: AppLocalizer) -> String {
     switch self {
-    case .appBundleUnavailable:
-      "当前应用包无法注册为登录项，请先把 CodexMeter 安装到稳定位置。"
+    case .registeredRequiresApproval:
+      localizer.string(.loginRegisteredRequiresApproval)
+    case .approvalRequired:
+      localizer.string(.loginApprovalRequired)
+    case .bundleUnavailable:
+      localizer.string(.loginBundleUnavailable)
     case .unknownStatus:
-      "无法读取登录项状态，请在系统设置中检查。"
+      localizer.string(.loginUnknownStatus)
+    case .system(let message):
+      message
     }
   }
 }
