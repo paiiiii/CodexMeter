@@ -111,7 +111,10 @@ struct MenuBarBadge: View {
         Text("!")
       } else {
         CodexMeterBrandMark(style: .menuBar)
-          .frame(width: 14, height: 14)
+          .frame(
+            width: MenuBarBadgeMetrics.brandMarkSize,
+            height: MenuBarBadgeMetrics.brandMarkSize
+          )
           .foregroundStyle(.primary)
 
         if let remaining = remainingPercent {
@@ -121,4 +124,8 @@ struct MenuBarBadge: View {
       }
     }
   }
+}
+
+enum MenuBarBadgeMetrics {
+  static let brandMarkSize: CGFloat = 10
 }

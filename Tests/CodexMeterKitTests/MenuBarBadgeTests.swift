@@ -8,7 +8,7 @@ import XCTest
 final class MenuBarBadgeTests: XCTestCase {
   func testMenuBarBadgeRendersAtNativeStatusBarScale() throws {
     let badge =
-      MenuBarBadge(hasError: false, remainingPercent: 19)
+      MenuBarBadge(hasError: false, remainingPercent: 5)
       .foregroundStyle(.black)
       .padding(.horizontal, 4)
       .frame(height: 22)
@@ -18,7 +18,8 @@ final class MenuBarBadgeTests: XCTestCase {
     renderer.scale = 2
     let image = try XCTUnwrap(renderer.cgImage)
 
-    XCTAssertGreaterThan(image.width, 60)
+    XCTAssertGreaterThan(image.width, 50)
+    XCTAssertLessThan(image.width, 120)
     XCTAssertEqual(image.height, 44)
 
     if let outputPath = ProcessInfo.processInfo.environment["CODEX_METER_BADGE_SNAPSHOT"] {
@@ -26,5 +27,22 @@ final class MenuBarBadgeTests: XCTestCase {
       let data = try XCTUnwrap(representation.representation(using: .png, properties: [:]))
       try data.write(to: URL(fileURLWithPath: outputPath), options: .atomic)
     }
+  }
+
+  func testMenuBarBrandMarkUsesCompactStatusBarFootprint() throws {
+    let mark =
+      CodexMeterBrandMark(style: .menuBar)
+      .foregroundStyle(.black)
+      .frame(
+        width: MenuBarBadgeMetrics.brandMarkSize,
+        height: MenuBarBadgeMetrics.brandMarkSize
+      )
+    let renderer = ImageRenderer(content: mark)
+    renderer.scale = 2
+    let image = try XCTUnwrap(renderer.cgImage)
+
+    XCTAssertEqual(MenuBarBadgeMetrics.brandMarkSize, 10)
+    XCTAssertEqual(image.width, 20)
+    XCTAssertEqual(image.height, 20)
   }
 }
