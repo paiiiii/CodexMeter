@@ -1,37 +1,37 @@
-# CodexMeter Logo and Corner QA
+# CodexMeter Status Bar Brand QA
 
-- Source visual truth: `/var/folders/26/1jhmqmk9267cy_p2r59v5cd00000gn/T/TemporaryItems/NSIRD_screencaptureui_DQWT0K/Screenshot 2026-07-11 at 4.57.43 PM.png`
-- Implementation screenshot: `/var/folders/26/1jhmqmk9267cy_p2r59v5cd00000gn/T/com.openai.sky.CUAService/CodexMeter Screenshot 2026-07-11 at 5.07.27 PM.jpeg`
-- Viewport: source crop 252×121; implementation window 348×238 with a matching 252×120 top-left crop
-- State: macOS floating mode, light appearance, live Codex usage loaded
-- Full-view comparison evidence: `QA/logo-border-full-comparison.png` (before on the left, after on the right)
-- Focused region comparison evidence: `QA/logo-focused-comparison.png` (normalized header and primary metric region)
+- Source visual truth: `/Users/paiii/Desktop/Screenshot 2026-07-11 at 9.29.06 PM.png`
+- Implementation screenshot: `QA/menu-bar-badge-after.png`
+- Viewport: source status-bar crop 64×36 px; production badge rendered at native 2× scale, 107×44 px, then normalized for comparison
+- State: normal account state with `19%` remaining; macOS light/tinted menu bar appearance
+- Full-view comparison evidence: `QA/menu-bar-brand-comparison.png` (old badge on the left, new badge on the right)
+- Focused region comparison: the full target is already a focused status-bar component, so no smaller crop was needed
 
 ## Findings
 
-No actionable P0, P1, or P2 differences remain for the requested change.
+No actionable P0, P1, or P2 differences remain for the requested status-bar icon change.
 
-- Fonts and typography: the existing rounded system typography, weights, tracking, hierarchy, wrapping, and antialiasing are unchanged.
-- Spacing and layout rhythm: the 24 pt logo slot and 8 pt header gap are preserved; the wordmark and metrics did not shift.
-- Colors and visual tokens: the mark retains the graphite ring and mint detail from the app icon and remains legible on the glass surface.
-- Image quality and asset fidelity: the new 128×128 RGBA module resource is a transparent, mark-only derivative of the shipped app icon. The opaque app-icon tile is not reused inside the widget. At 24 pt the C silhouette is clear; minor ticks are intentionally subordinate.
-- Copy and content: `CODEXMETER`, quota values, reset countdown, and token labels are unchanged.
+- Fonts and typography: the system menu-bar font, `19%` content, monospaced digits, baseline, weight, and antialiasing are unchanged.
+- Spacing and layout rhythm: the new 14 pt mark plus 3 pt stack spacing produces about 4 pt of visible separation, matching the supplied screenshot without manual offsets.
+- Colors and visual tokens: the mark renders as a native template image, so it follows light, dark, tinted, and highlighted menu-bar foreground colors.
+- Image quality and asset fidelity: the old generic hex-grid SF Symbol is replaced by a dedicated transparent 64×64 optical crop of the CodexMeter C-ring. Its visible alpha bounds fill at least 50×50 px, preserving the opening, dot, and cutout ticks at status-bar size.
+- Copy and content: the percentage and error-state text are unchanged. The warning triangle remains reserved for refresh errors.
 
 ## Comparison History
 
-1. Initial evidence showed a P2 rectangular seam around the upper-left glass corner and the old SF Symbol instead of the new brand mark.
-2. The rectangular `AmbientGlow` clip was replaced with the same 28 pt continuous rounded clip as the glass surface. A transparent logo resource was added to the SwiftPM module and loaded as an `NSImage`.
-3. Post-fix evidence shows clean wallpaper/glass separation with no square seam, plus the new C-ring mark in the original 24 pt header slot.
+1. Initial evidence showed the old `circle.hexagongrid.fill` glyph next to `19%`, which did not match the new CodexMeter identity.
+2. The shared brand component was moved into the Brand module, given widget/color and menu-bar/template styles, and connected to `MenuBarLabel`.
+3. A tighter 64×64 menu-bar asset was added because the 128×128 widget mark had too much transparent padding at 14 pt. The final normalized comparison shows the new C-ring at the same visual size and spacing as the old icon.
 
 ## Interaction and Runtime Checks
 
-- Floating window launched and displayed live usage data.
-- Refresh/loading and synchronized states both rendered without layout movement.
-- Logo resource was present in the Release app bundle and decoded successfully.
-- This is a native macOS app; browser console checks are not applicable.
+- The production `MenuBarBadge` rendered successfully at native 2× status-bar scale.
+- Independent template and color `NSImage` instances prevent menu-bar tinting from changing the in-widget color logo.
+- The Release app launched with live Codex usage and retained its accessible outer label/value.
+- This is a native macOS component; browser and browser-console checks are not applicable.
 
 ## Follow-up Polish
 
-- P3: a dedicated hand-tuned 16 pt menu-bar variant could preserve more tick detail if the menu-bar symbol is replaced later.
+- P3: capture an additional native dark-menu-bar screenshot if a future visual refresh changes the mark or system tint behavior.
 
 final result: passed
