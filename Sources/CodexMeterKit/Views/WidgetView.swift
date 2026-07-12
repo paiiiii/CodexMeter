@@ -49,6 +49,7 @@ public struct WidgetView: View {
   private var header: some View {
     HStack(spacing: 8) {
       CodexMeterBrandMark()
+        .frame(width: 24, height: 24)
 
       Text("CODEXMETER")
         .font(.system(size: 10, weight: .semibold, design: .rounded))
@@ -161,26 +162,6 @@ public struct WidgetView: View {
     }
     .frame(height: 26)
     .opacity(isHovering ? 1 : 0.9)
-  }
-}
-
-private struct CodexMeterBrandMark: View {
-  private let image = CodexMeterResources.markURL.flatMap(NSImage.init(contentsOf:))
-
-  var body: some View {
-    Group {
-      if let image {
-        Image(nsImage: image)
-          .resizable()
-          .interpolation(.high)
-          .scaledToFit()
-      } else {
-        Image(systemName: "gauge.with.dots.needle.0percent")
-          .font(.system(size: 14, weight: .semibold))
-      }
-    }
-    .frame(width: 24, height: 24)
-    .accessibilityHidden(true)
   }
 }
 

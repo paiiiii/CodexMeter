@@ -1,37 +1,37 @@
-# CodexMeter Logo and Corner QA
+# CodexMeter Status Bar Logo Size QA
 
-- Source visual truth: `/var/folders/26/1jhmqmk9267cy_p2r59v5cd00000gn/T/TemporaryItems/NSIRD_screencaptureui_DQWT0K/Screenshot 2026-07-11 at 4.57.43 PM.png`
-- Implementation screenshot: `/var/folders/26/1jhmqmk9267cy_p2r59v5cd00000gn/T/com.openai.sky.CUAService/CodexMeter Screenshot 2026-07-11 at 5.07.27 PM.jpeg`
-- Viewport: source crop 252×121; implementation window 348×238 with a matching 252×120 top-left crop
-- State: macOS floating mode, light appearance, live Codex usage loaded
-- Full-view comparison evidence: `QA/logo-border-full-comparison.png` (before on the left, after on the right)
-- Focused region comparison evidence: `QA/logo-focused-comparison.png` (normalized header and primary metric region)
+- Source visual truth: `/var/folders/26/1jhmqmk9267cy_p2r59v5cd00000gn/T/TemporaryItems/NSIRD_screencaptureui_em964j/Screenshot 2026-07-11 at 9.43.39 PM.png`
+- Implementation screenshot: `QA/menu-bar-badge-small.png`
+- Viewport: source status-bar crop 152x145 px; production badge rendered at native 2x scale as 83x44 px
+- State: normal account state with `5%` remaining; macOS light/tinted menu bar appearance
+- Full-view comparison evidence: `QA/menu-bar-badge-small-comparison.png`
+- Focused region comparison: the full target is already a focused status-bar component, so no smaller crop was needed
 
 ## Findings
 
-No actionable P0, P1, or P2 differences remain for the requested change.
+No actionable P0, P1, or P2 differences remain for the requested status-bar logo size change.
 
-- Fonts and typography: the existing rounded system typography, weights, tracking, hierarchy, wrapping, and antialiasing are unchanged.
-- Spacing and layout rhythm: the 24 pt logo slot and 8 pt header gap are preserved; the wordmark and metrics did not shift.
-- Colors and visual tokens: the mark retains the graphite ring and mint detail from the app icon and remains legible on the glass surface.
-- Image quality and asset fidelity: the new 128×128 RGBA module resource is a transparent, mark-only derivative of the shipped app icon. The opaque app-icon tile is not reused inside the widget. At 24 pt the C silhouette is clear; minor ticks are intentionally subordinate.
-- Copy and content: `CODEXMETER`, quota values, reset countdown, and token labels are unchanged.
+- Fonts and typography: the system menu-bar font, `5%` content, monospaced digits, baseline, weight, and antialiasing are unchanged.
+- Spacing and layout rhythm: the menu-bar mark now uses a 10 pt footprint instead of 14 pt, so it sits within the text height and no longer touches the top or bottom of the status bar.
+- Colors and visual tokens: the mark still renders as a native template image, so it follows light, dark, tinted, and highlighted menu-bar foreground colors.
+- Image quality and asset fidelity: the dedicated transparent 64x64 C-ring asset is unchanged; only its rendered status-bar footprint was reduced.
+- Copy and content: the percentage and error-state text are unchanged. The warning triangle remains reserved for refresh errors.
 
 ## Comparison History
 
-1. Initial evidence showed a P2 rectangular seam around the upper-left glass corner and the old SF Symbol instead of the new brand mark.
-2. The rectangular `AmbientGlow` clip was replaced with the same 28 pt continuous rounded clip as the glass surface. A transparent logo resource was added to the SwiftPM module and loaded as an `NSImage`.
-3. Post-fix evidence shows clean wallpaper/glass separation with no square seam, plus the new C-ring mark in the original 24 pt header slot.
+1. Initial evidence showed the C-ring status-bar logo rendering too large next to `5%`, with the mark visually crowding the menu-bar height.
+2. The production `MenuBarBadge` mark frame was reduced from 14 pt to a shared 10 pt metric.
+3. A focused render test now locks the menu-bar mark to a 10 pt / 20 px Retina footprint, and the final comparison shows the icon proportion aligned with the percentage text.
 
 ## Interaction and Runtime Checks
 
-- Floating window launched and displayed live usage data.
-- Refresh/loading and synchronized states both rendered without layout movement.
-- Logo resource was present in the Release app bundle and decoded successfully.
-- This is a native macOS app; browser console checks are not applicable.
+- The production `MenuBarBadge` rendered successfully at native 2x status-bar scale.
+- The full Swift test suite passed: 20 tests executed, 1 live integration test skipped by default, 0 failures.
+- The Release app was rebuilt, ad-hoc signed, installed at `/Users/paiii/Applications/CodexMeter.app`, and relaunched.
+- This is a native macOS component; browser and browser-console checks are not applicable.
 
 ## Follow-up Polish
 
-- P3: a dedicated hand-tuned 16 pt menu-bar variant could preserve more tick detail if the menu-bar symbol is replaced later.
+- P3: capture an additional real menu-bar screenshot after any future system tint or dark-mode change.
 
 final result: passed

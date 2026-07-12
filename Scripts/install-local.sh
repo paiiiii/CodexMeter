@@ -27,7 +27,7 @@ DIST_DIR="${DIST_DIR:-${HOME:?HOME is required}/Applications}"
 readonly DIST_DIR
 readonly APP_BUNDLE="$DIST_DIR/CodexMeter.app"
 
-DIST_DIR="$DIST_DIR" "$SCRIPT_DIR/build-app.sh"
+env DIST_DIR="$DIST_DIR" "$SCRIPT_DIR/build-app.sh"
 
 if [[ "$launch_after_install" -eq 1 ]]; then
     open "$APP_BUNDLE"

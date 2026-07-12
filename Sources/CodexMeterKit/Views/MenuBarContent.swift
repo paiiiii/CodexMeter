@@ -77,19 +77,10 @@ public struct MenuBarLabel: View {
   }
 
   public var body: some View {
-    HStack(spacing: 4) {
-      Image(
-        systemName: store.lastErrorDescription == nil
-          ? "circle.hexagongrid.fill"
-          : "exclamationmark.triangle.fill"
-      )
-      if store.lastErrorDescription != nil {
-        Text("!")
-      } else if let remaining = store.snapshot?.primary?.remainingPercent {
-        Text("\(remaining)%")
-          .monospacedDigit()
-      }
-    }
+    MenuBarBadge(
+      hasError: store.lastErrorDescription != nil,
+      remainingPercent: store.snapshot?.primary?.remainingPercent
+    )
     .accessibilityLabel("CodexMeter")
     .accessibilityValue(menuBarAccessibilityValue)
   }
@@ -107,4 +98,34 @@ public struct MenuBarLabel: View {
       ?? "今日 Token 暂不可用"
     return "\(quota)，\(tokens)"
   }
+}
+
+struct MenuBarBadge: View {
+  let hasError: Bool
+  let remainingPercent: Int?
+
+  var body: some View {
+    HStack(spacing: 3) {
+      if hasError {
+        Image(systemName: "exclamationmark.triangle.fill")
+        Text("!")
+      } else {
+        CodexMeterBrandMark(style: .menuBar)
+          .frame(
+            width: MenuBarBadgeMetrics.brandMarkSize,
+            height: MenuBarBadgeMetrics.brandMarkSize
+          )
+          .foregroundStyle(.primary)
+
+        if let remaining = remainingPercent {
+          Text("\(remaining)%")
+            .monospacedDigit()
+        }
+      }
+    }
+  }
+}
+
+enum MenuBarBadgeMetrics {
+  static let brandMarkSize: CGFloat = 10
 }
