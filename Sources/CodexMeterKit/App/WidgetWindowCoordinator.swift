@@ -19,7 +19,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     static let frameName = NSWindow.FrameAutosaveName("CodexMeter.widgetFrame")
   }
 
-  private static let widgetSize = NSSize(width: 348, height: 238)
+  private static let widgetSize = CodexMeterDesign.Metrics.widgetSize
 
   private let store: UsageStore
   private let languageController: LanguageController
@@ -154,7 +154,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
         return
       }
       NSAnimationContext.runAnimationGroup { context in
-        context.duration = 0.16
+        context.duration = CodexMeterDesign.Motion.immediate
         context.timingFunction = CAMediaTimingFunction(name: .easeIn)
         panel.animator().alphaValue = 0
       } completionHandler: { [weak self] in
@@ -179,7 +179,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
 
     guard shouldAnimate else { return }
     NSAnimationContext.runAnimationGroup { context in
-      context.duration = 0.22
+      context.duration = CodexMeterDesign.Motion.standard
       context.timingFunction = CAMediaTimingFunction(name: .easeOut)
       panel.animator().alphaValue = 1
     }

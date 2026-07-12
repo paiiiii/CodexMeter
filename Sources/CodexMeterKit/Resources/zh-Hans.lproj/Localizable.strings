@@ -10,6 +10,9 @@
 "mode.floating.description" = "跨桌面空间显示，并保持在普通窗口上方。";
 "mode.desktop.description" = "固定在普通窗口后方，像桌面插件一样显示。";
 "mode.hidden.description" = "隐藏小组件；可随时从菜单栏恢复。";
+"mode.floating.compact" = "置顶";
+"mode.desktop.compact" = "桌面";
+"mode.hidden.compact" = "隐藏";
 
 "settings.display.section" = "显示";
 "settings.widget_mode" = "小组件模式";
@@ -58,6 +61,7 @@
 "widget.today_unavailable" = "今日 Token 暂不可用";
 "widget.open_settings" = "打开设置";
 "widget.status.syncing" = "同步中";
+"widget.status.cached" = "缓存";
 "widget.status.offline" = "离线";
 "widget.status.live" = "实时";
 "widget.status.connecting" = "连接中";
@@ -68,16 +72,16 @@
 "quota.primary_limit" = "主要额度";
 "quota.secondary_limit" = "次要额度";
 "quota.remaining_format" = "剩余 %@";
-"quota.short_fallback_format" = "%@剩余";
+"quota.short_fallback_format" = "%@窗口";
 "quota.days.one" = "%d 天额度";
 "quota.days.other" = "%d 天额度";
 "quota.hours.one" = "%d 小时额度";
 "quota.hours.other" = "%d 小时额度";
 "quota.minutes.one" = "%d 分钟额度";
 "quota.minutes.other" = "%d 分钟额度";
-"quota.short_days_format" = "%dD 剩余";
-"quota.short_hours_format" = "%dH 剩余";
-"quota.short_minutes_format" = "%dM 剩余";
+"quota.short_days_format" = "%dD 窗口";
+"quota.short_hours_format" = "%dH 窗口";
+"quota.short_minutes_format" = "%dM 窗口";
 "quota.accessibility_format" = "剩余 %@，%@";
 
 "reset.waiting_for_sync" = "等待同步";
@@ -107,4 +111,3 @@
 "login.approval_required" = "请在系统设置的登录项中批准 CodexMeter。";
 "login.bundle_unavailable" = "当前应用包无法注册为登录项，请先把 CodexMeter 安装到稳定位置。";
 "login.unknown_status" = "无法读取登录项状态，请在系统设置中检查。";
-

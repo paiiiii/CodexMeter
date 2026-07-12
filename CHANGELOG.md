@@ -4,6 +4,22 @@ All notable changes to CodexMeter are documented in this file.
 
 ## [Unreleased]
 
+## [0.4.0] - 2026-07-12
+
+### Added
+
+- The Signal & Silence design system with reusable SwiftUI foundations and components.
+- Machine-readable design tokens and a macOS design QA matrix.
+- Explicit Cached connection state and stable compact presentation-mode controls.
+- Automated contracts for semantic quota states, connection states, motion, and design tokens.
+
+### Changed
+
+- Refined the widget hierarchy around the primary quota, daily token activity, and reset rhythm.
+- Unified quota, status, Settings, menu-bar, accessibility, and reduced-motion/transparency behavior.
+- Replaced the contained header mark with the transparent CodexMeter glyph.
+- Updated application and app-server client metadata to version 0.4.0.
+
 ## [0.3.0] - 2026-07-12
 
 ### Added
@@ -41,7 +57,8 @@ All notable changes to CodexMeter are documented in this file.
 - Always-on-top, desktop, and hidden presentation modes.
 - Local release packaging, ad-hoc signing, and automated Swift tests.
 
-[Unreleased]: https://github.com/paiiiii/CodexMeter/compare/v0.3.0...HEAD
+[Unreleased]: https://github.com/paiiiii/CodexMeter/compare/v0.4.0...HEAD
+[0.4.0]: https://github.com/paiiiii/CodexMeter/compare/v0.3.0...v0.4.0
 [0.3.0]: https://github.com/paiiiii/CodexMeter/compare/v0.2.0...v0.3.0
 [0.2.0]: https://github.com/paiiiii/CodexMeter/compare/v0.1.0...v0.2.0
 [0.1.0]: https://github.com/paiiiii/CodexMeter/tree/v0.1.0

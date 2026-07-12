@@ -52,16 +52,27 @@ public struct SettingsView: View {
         }
 
         LabeledContent(localizer.string(.settingsDataSource)) {
-          HStack(spacing: 6) {
-            Circle()
-              .fill(store.lastErrorDescription == nil && store.snapshot != nil ? .green : .orange)
-              .frame(width: 7, height: 7)
+          VStack(alignment: .trailing, spacing: CodexMeterDesign.Spacing.compact) {
+            HStack(spacing: CodexMeterDesign.Spacing.compact) {
+              Circle()
+                .fill(connectionSignal.color)
+                .frame(
+                  width: CodexMeterDesign.Metrics.statusDot,
+                  height: CodexMeterDesign.Metrics.statusDot
+                )
+              Text(connectionStatusTitle)
+                .font(CodexMeterDesign.Typography.body)
+            }
+
             Text(
               localizer.string(
                 store.snapshot == nil ? .settingsWaitingForCodex : .settingsLocalAppServer
               )
             )
+            .font(.caption)
+            .foregroundStyle(.secondary)
           }
+          .accessibilityElement(children: .combine)
         }
 
         HStack {
@@ -84,16 +95,28 @@ public struct SettingsView: View {
                 localizer.time(fetchedAt, includesSeconds: true)
               )
             )
-              .font(.caption)
-              .foregroundStyle(.secondary)
+            .font(.caption)
+            .foregroundStyle(.secondary)
           }
         }
 
         if let error = store.lastErrorDescription {
-          Text(error)
-            .font(.caption)
-            .foregroundStyle(.orange)
-            .textSelection(.enabled)
+          HStack(alignment: .top, spacing: CodexMeterDesign.Spacing.small) {
+            Image(systemName: "exclamationmark.circle.fill")
+              .foregroundStyle(connectionSignal.color)
+            Text(error)
+              .font(.caption)
+              .textSelection(.enabled)
+          }
+          .padding(CodexMeterDesign.Spacing.small)
+          .background(
+            connectionSignal.color.opacity(0.08),
+            in: RoundedRectangle(
+              cornerRadius: CodexMeterDesign.Radius.control,
+              style: .continuous
+            )
+          )
+          .accessibilityElement(children: .combine)
         }
       }
 
@@ -120,7 +143,13 @@ public struct SettingsView: View {
       }
     }
     .formStyle(.grouped)
-    .frame(width: 500, height: 520)
+    .tint(CodexMeterDesign.ColorToken.signal)
+    .frame(
+      minWidth: 500,
+      idealWidth: 520,
+      minHeight: 520,
+      idealHeight: 560
+    )
     .onAppear {
       loginItemController.refresh()
     }
@@ -128,6 +157,24 @@ public struct SettingsView: View {
 
   private var localizer: AppLocalizer {
     languageController.localizer
+  }
+
+  private var connectionSignal: ConnectionSignal {
+    ConnectionSignal.resolve(
+      isRefreshing: store.isRefreshing,
+      hasSnapshot: store.snapshot != nil,
+      hasError: store.lastErrorDescription != nil
+    )
+  }
+
+  private var connectionStatusTitle: String {
+    switch connectionSignal {
+    case .connecting: localizer.string(.widgetStatusConnecting)
+    case .syncing: localizer.string(.widgetStatusSyncing)
+    case .live: localizer.string(.widgetStatusLive)
+    case .cached: localizer.string(.widgetStatusCached)
+    case .offline: localizer.string(.widgetStatusOffline)
+    }
   }
 
   private var languageBinding: Binding<AppLanguage> {

@@ -84,7 +84,8 @@ public final class LanguageController: NSObject {
     self.defaults = defaults
     self.preferredLanguages = preferredLanguages
     self.notificationCenter = notificationCenter
-    language = defaults.string(forKey: Self.preferenceKey)
+    language =
+      defaults.string(forKey: Self.preferenceKey)
       .flatMap(AppLanguage.init(rawValue:)) ?? .system
     super.init()
 
@@ -139,8 +140,8 @@ private struct CodexMeterLanguageModifier: ViewModifier {
   }
 }
 
-public extension View {
-  func codexMeterLanguage(_ controller: LanguageController) -> some View {
+extension View {
+  public func codexMeterLanguage(_ controller: LanguageController) -> some View {
     modifier(CodexMeterLanguageModifier(controller: controller))
   }
 }
@@ -158,6 +159,9 @@ enum L10nKey: String, CaseIterable, Sendable {
   case modeFloatingDescription = "mode.floating.description"
   case modeDesktopDescription = "mode.desktop.description"
   case modeHiddenDescription = "mode.hidden.description"
+  case modeFloatingCompact = "mode.floating.compact"
+  case modeDesktopCompact = "mode.desktop.compact"
+  case modeHiddenCompact = "mode.hidden.compact"
 
   case settingsDisplaySection = "settings.display.section"
   case settingsWidgetMode = "settings.widget_mode"
@@ -206,6 +210,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case widgetTodayUnavailable = "widget.today_unavailable"
   case widgetOpenSettings = "widget.open_settings"
   case widgetStatusSyncing = "widget.status.syncing"
+  case widgetStatusCached = "widget.status.cached"
   case widgetStatusOffline = "widget.status.offline"
   case widgetStatusLive = "widget.status.live"
   case widgetStatusConnecting = "widget.status.connecting"

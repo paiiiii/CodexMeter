@@ -137,7 +137,6 @@ struct MenuBarBadge: View {
     HStack(spacing: 3) {
       if hasError {
         Image(systemName: "exclamationmark.triangle.fill")
-        Text("!")
       } else {
         CodexMeterBrandMark(style: .menuBar)
           .frame(

@@ -10,6 +10,9 @@
 "mode.floating.description" = "Appears across Spaces and stays above regular windows.";
 "mode.desktop.description" = "Stays behind regular windows like a desktop widget.";
 "mode.hidden.description" = "Hides the widget; restore it anytime from the menu bar.";
+"mode.floating.compact" = "Top";
+"mode.desktop.compact" = "Desktop";
+"mode.hidden.compact" = "Hide";
 
 "settings.display.section" = "Display";
 "settings.widget_mode" = "Widget Mode";
@@ -58,6 +61,7 @@
 "widget.today_unavailable" = "Today's tokens unavailable";
 "widget.open_settings" = "Open Settings";
 "widget.status.syncing" = "Syncing";
+"widget.status.cached" = "Cached";
 "widget.status.offline" = "Offline";
 "widget.status.live" = "Live";
 "widget.status.connecting" = "Connecting";
@@ -68,16 +72,16 @@
 "quota.primary_limit" = "Primary limit";
 "quota.secondary_limit" = "Secondary limit";
 "quota.remaining_format" = "%@ remaining";
-"quota.short_fallback_format" = "%@ LEFT";
+"quota.short_fallback_format" = "%@ WINDOW";
 "quota.days.one" = "%d-day limit";
 "quota.days.other" = "%d-day limit";
 "quota.hours.one" = "%d-hour limit";
 "quota.hours.other" = "%d-hour limit";
 "quota.minutes.one" = "%d-minute limit";
 "quota.minutes.other" = "%d-minute limit";
-"quota.short_days_format" = "%dD LEFT";
-"quota.short_hours_format" = "%dH LEFT";
-"quota.short_minutes_format" = "%dM LEFT";
+"quota.short_days_format" = "%dD WINDOW";
+"quota.short_hours_format" = "%dH WINDOW";
+"quota.short_minutes_format" = "%dM WINDOW";
 "quota.accessibility_format" = "%@ remaining, %@";
 
 "reset.waiting_for_sync" = "Waiting for sync";
@@ -107,4 +111,3 @@
 "login.approval_required" = "Approve CodexMeter in Login Items in System Settings.";
 "login.bundle_unavailable" = "This app bundle cannot be registered as a login item. Install CodexMeter in a stable location first.";
 "login.unknown_status" = "The login item status could not be read. Check it in System Settings.";
-

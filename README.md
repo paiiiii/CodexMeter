@@ -100,6 +100,16 @@ account/rateLimits/read + account/usage/read
 
 The project is a Swift Package. The executable target owns the application lifecycle, while `CodexMeterKit` contains usage models, the app-server client, language resources, UI, and testable logic. The release script assembles the executable, `Info.plist`, AppIcon, and compiled SwiftPM resource bundle into a standard `.app`.
 
+## Design System
+
+CodexMeter uses **Signal & Silence**, a project-specific design system built around evidence before ornament, editorial breathing room, semantic quota states, and native macOS behavior. Its hierarchy keeps the five-hour quota decisive while token activity and longer-window context remain readable without visual noise.
+
+- Read the human-facing [Design System](docs/DESIGN_SYSTEM.md).
+- Inspect the machine-readable [design tokens](tokens.json).
+- Use the [Design QA matrix](docs/DESIGN_QA.md) for visible changes.
+
+The system intentionally retains CodexMeter's black-and-white restraint and mint identity signal; it does not copy another product's visual palette.
+
 Regenerate the app icon from its 1024×1024 source with:
 
 ```bash

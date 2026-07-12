@@ -6,9 +6,7 @@ public struct WidgetView: View {
   private let coordinator: WidgetWindowCoordinator
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
   @Environment(LanguageController.self) private var languageController
-  @State private var isHovering = false
 
   public init(store: UsageStore, coordinator: WidgetWindowCoordinator) {
     self.store = store
@@ -16,44 +14,43 @@ public struct WidgetView: View {
   }
 
   public var body: some View {
-    WidgetSurface(reduceTransparency: reduceTransparency) {
+    CodexMeterSurface {
       ZStack {
-        AmbientGlow()
+        AmbientSignal()
 
         VStack(spacing: 0) {
           header
           mainMetrics
-            .padding(.top, 8)
+            .padding(.top, CodexMeterDesign.Spacing.small)
           weeklyQuota
-            .padding(.top, 8)
+            .padding(.top, CodexMeterDesign.Spacing.small)
           controls
-            .padding(.top, 8)
+            .padding(.top, CodexMeterDesign.Spacing.small)
         }
-        .padding(14)
+        .padding(CodexMeterDesign.Metrics.contentInset)
       }
     }
-    .padding(5)
-    .contentShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
-    .onHover { hovering in
-      guard !reduceMotion else {
-        isHovering = hovering
-        return
-      }
-      withAnimation(.smooth(duration: 0.22)) {
-        isHovering = hovering
-      }
-    }
+    .padding(CodexMeterDesign.Metrics.outerInset)
+    .contentShape(
+      RoundedRectangle(
+        cornerRadius: CodexMeterDesign.Radius.surface,
+        style: .continuous
+      )
+    )
     .accessibilityElement(children: .contain)
     .accessibilityLabel(localizer.string(.widgetUsageAccessibility))
   }
 
   private var header: some View {
-    HStack(spacing: 8) {
+    HStack(spacing: CodexMeterDesign.Spacing.small) {
       CodexMeterBrandMark()
-        .frame(width: 24, height: 24)
+        .frame(
+          width: CodexMeterDesign.Metrics.brandGlyph,
+          height: CodexMeterDesign.Metrics.brandGlyph
+        )
 
       Text("CODEXMETER")
-        .font(.system(size: 10, weight: .semibold, design: .rounded))
+        .font(CodexMeterDesign.Typography.brand)
         .tracking(1.15)
 
       Spacer(minLength: 8)
@@ -68,51 +65,67 @@ public struct WidgetView: View {
           .rotationEffect(.degrees(store.isRefreshing && !reduceMotion ? 360 : 0))
           .animation(
             store.isRefreshing && !reduceMotion
-              ? .linear(duration: 0.9).repeatForever(autoreverses: false)
+              ? .linear(duration: CodexMeterDesign.Motion.refresh)
+                .repeatForever(autoreverses: false)
               : .default,
             value: store.isRefreshing
           )
-          .frame(width: 24, height: 24)
-          .contentShape(Circle())
+          .frame(
+            width: CodexMeterDesign.Metrics.iconControl,
+            height: CodexMeterDesign.Metrics.iconControl
+          )
+          .contentShape(
+            RoundedRectangle(
+              cornerRadius: CodexMeterDesign.Radius.control,
+              style: .continuous
+            )
+          )
+          .codexMeterControlBackground()
       }
       .buttonStyle(.plain)
       .disabled(store.isRefreshing)
       .help(localizer.string(.commonRefreshNow))
       .accessibilityLabel(localizer.string(.widgetRefreshAccessibility))
     }
-    .frame(height: 24)
+    .frame(height: CodexMeterDesign.Metrics.controlHeight)
   }
 
   private var mainMetrics: some View {
-    HStack(spacing: 18) {
+    HStack(spacing: CodexMeterDesign.Spacing.large) {
       QuotaRing(window: store.snapshot?.primary)
-        .frame(width: 88, height: 88)
+        .frame(
+          width: CodexMeterDesign.Metrics.quotaRing,
+          height: CodexMeterDesign.Metrics.quotaRing
+        )
 
-      VStack(alignment: .leading, spacing: 2) {
+      Rectangle()
+        .fill(CodexMeterDesign.ColorToken.divider)
+        .frame(width: 1, height: 64)
+
+      VStack(alignment: .leading, spacing: CodexMeterDesign.Spacing.compact) {
+        Text(localizer.string(.widgetTodayTokens))
+          .font(CodexMeterDesign.Typography.sectionLabel)
+          .tracking(1.1)
+          .foregroundStyle(.secondary)
+
         Text(
           MetricFormatter.compactTokens(
             store.snapshot?.todayTokens,
             localizer: localizer
           )
         )
-          .font(.system(size: 31, weight: .medium, design: .rounded))
-          .monospacedDigit()
-          .lineLimit(1)
-          .minimumScaleFactor(0.72)
-          .contentTransition(
-            .numericText(value: Double(store.snapshot?.todayTokens ?? 0))
-          )
-
-        Text(localizer.string(.widgetTodayTokens))
-          .font(.system(size: 9, weight: .semibold, design: .rounded))
-          .tracking(1.2)
-          .foregroundStyle(.secondary)
+        .font(CodexMeterDesign.Typography.heroMetric)
+        .monospacedDigit()
+        .lineLimit(1)
+        .minimumScaleFactor(0.72)
+        .contentTransition(
+          .numericText(value: Double(store.snapshot?.todayTokens ?? 0))
+        )
 
         if let tokens = store.snapshot?.todayTokens {
           Text(MetricFormatter.exactTokens(tokens, localizer: localizer))
-            .font(.system(size: 10, weight: .medium, design: .monospaced))
+            .font(CodexMeterDesign.Typography.metadata)
             .foregroundStyle(.secondary)
-            .padding(.top, 5)
             .contentTransition(.numericText(value: Double(tokens)))
         } else {
           Text(
@@ -122,11 +135,12 @@ public struct WidgetView: View {
               )
               : localizer.string(.widgetTodayUnavailable)
           )
-          .font(.system(size: 10))
+          .font(CodexMeterDesign.Typography.metadata)
           .foregroundStyle(.secondary)
-          .padding(.top, 5)
           .lineLimit(1)
         }
+
+        PrimaryResetCountdown(date: store.snapshot?.primary?.resetsAt)
       }
       .frame(maxWidth: .infinity, alignment: .leading)
       .accessibilityElement(children: .ignore)
@@ -137,13 +151,23 @@ public struct WidgetView: View {
         } ?? localizer.string(.commonNoData)
       )
     }
-    .frame(height: 88)
-    .animation(.smooth(duration: reduceMotion ? 0 : 0.38), value: store.snapshot)
+    .frame(height: CodexMeterDesign.Metrics.quotaRing)
+    .animation(
+      CodexMeterDesign.Motion.smooth(
+        CodexMeterDesign.Motion.data,
+        reduceMotion: reduceMotion
+      ),
+      value: store.snapshot
+    )
   }
 
   private var weeklyQuota: some View {
-    QuotaBar(window: store.snapshot?.secondary)
-      .frame(height: 28)
+    CodexMeterInsetSurface {
+      QuotaBar(window: store.snapshot?.secondary)
+        .padding(.horizontal, CodexMeterDesign.Spacing.small)
+        .padding(.vertical, 6)
+    }
+    .frame(height: 32)
   }
 
   private var controls: some View {
@@ -151,8 +175,7 @@ public struct WidgetView: View {
       ForEach(WidgetPresentationMode.allCases) { mode in
         ModeButton(
           mode: mode,
-          isSelected: coordinator.mode == mode,
-          showsTitle: isHovering
+          isSelected: coordinator.mode == mode
         ) {
           coordinator.setMode(mode)
         }
@@ -161,17 +184,23 @@ public struct WidgetView: View {
       Spacer(minLength: 2)
 
       SettingsLink {
-        Image(systemName: "slider.horizontal.3")
-          .font(.system(size: 11, weight: .semibold))
-          .frame(width: 28, height: 26)
-          .background(.primary.opacity(isHovering ? 0.09 : 0.05), in: Circle())
+        HStack(spacing: CodexMeterDesign.Spacing.compact) {
+          Image(systemName: "slider.horizontal.3")
+            .font(.system(size: 10, weight: .semibold))
+          Text(localizer.string(.commonSettings))
+            .font(CodexMeterDesign.Typography.control)
+        }
+        .frame(
+          width: CodexMeterDesign.Metrics.settingsControlWidth,
+          height: CodexMeterDesign.Metrics.controlHeight
+        )
+        .codexMeterControlBackground()
       }
       .buttonStyle(.plain)
       .help(localizer.string(.commonSettings))
       .accessibilityLabel(localizer.string(.widgetOpenSettings))
     }
-    .frame(height: 26)
-    .opacity(isHovering ? 1 : 0.9)
+    .frame(height: CodexMeterDesign.Metrics.controlHeight)
   }
 
   private var localizer: AppLocalizer {
@@ -179,102 +208,54 @@ public struct WidgetView: View {
   }
 }
 
-private struct WidgetSurface<Content: View>: View {
-  let reduceTransparency: Bool
-  @ViewBuilder let content: Content
-
+private struct AmbientSignal: View {
   var body: some View {
-    if reduceTransparency {
-      content
-        .background(
-          Color(nsColor: .windowBackgroundColor),
-          in: RoundedRectangle(cornerRadius: 28, style: .continuous)
+    Circle()
+      .fill(CodexMeterDesign.ColorToken.signal.opacity(0.075))
+      .frame(width: 152, height: 152)
+      .blur(radius: 38)
+      .offset(x: -122, y: -88)
+      .frame(maxWidth: .infinity, maxHeight: .infinity)
+      .allowsHitTesting(false)
+      .clipShape(
+        RoundedRectangle(
+          cornerRadius: CodexMeterDesign.Radius.surface,
+          style: .continuous
         )
-        .overlay(border)
-    } else if #available(macOS 26.0, *) {
-      content
-        .glassEffect(.regular, in: .rect(cornerRadius: 28))
-        .overlay(border)
-    } else {
-      content
-        .background(
-          .ultraThinMaterial,
-          in: RoundedRectangle(cornerRadius: 28, style: .continuous)
-        )
-        .overlay(border)
-    }
-  }
-
-  private var border: some View {
-    RoundedRectangle(cornerRadius: 28, style: .continuous)
-      .strokeBorder(.primary.opacity(0.11), lineWidth: 0.6)
-  }
-}
-
-private struct AmbientGlow: View {
-  var body: some View {
-    ZStack {
-      Circle()
-        .fill(Color.mint.opacity(0.09))
-        .frame(width: 150, height: 150)
-        .blur(radius: 34)
-        .offset(x: -120, y: -86)
-      Circle()
-        .fill(Color.indigo.opacity(0.06))
-        .frame(width: 130, height: 130)
-        .blur(radius: 38)
-        .offset(x: 132, y: 95)
-    }
-    .frame(maxWidth: .infinity, maxHeight: .infinity)
-    .allowsHitTesting(false)
-    .clipShape(RoundedRectangle(cornerRadius: 28, style: .continuous))
+      )
   }
 }
 
 private struct LiveStatusView: View {
   let store: UsageStore
 
-  @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(LanguageController.self) private var languageController
-  @State private var isPulsing = false
 
-  private var status: (title: String, color: Color) {
-    if store.isRefreshing {
-      return (localizer.string(.widgetStatusSyncing), .secondary)
-    }
-    if store.lastErrorDescription != nil {
-      return (localizer.string(.widgetStatusOffline), .orange)
-    }
-    if store.snapshot != nil {
-      return (localizer.string(.widgetStatusLive), .mint)
-    }
-    return (localizer.string(.widgetStatusConnecting), .secondary)
+  private var signal: ConnectionSignal {
+    ConnectionSignal.resolve(
+      isRefreshing: store.isRefreshing,
+      hasSnapshot: store.snapshot != nil,
+      hasError: store.lastErrorDescription != nil
+    )
   }
 
   var body: some View {
-    HStack(spacing: 5) {
-      Circle()
-        .fill(status.color)
-        .frame(width: 6, height: 6)
-        .scaleEffect(isPulsing && !reduceMotion && store.snapshot != nil ? 1.22 : 0.9)
-        .shadow(color: status.color.opacity(0.5), radius: 3)
-      Text(status.title)
-        .font(.system(size: 10, weight: .medium))
-        .foregroundStyle(.secondary)
+    CodexMeterStatusPill(
+      title: statusTitle,
+      signal: signal,
+      accessibilityLabel: localizer.string(.widgetConnectionStatusAccessibility),
+      help: store.lastErrorDescription ?? localizer.string(.widgetDataSourceHelp)
+    )
+  }
+
+  private var statusTitle: String {
+    switch signal {
+    case .connecting: localizer.string(.widgetStatusConnecting)
+    case .syncing: localizer.string(.widgetStatusSyncing)
+    case .live: localizer.string(.widgetStatusLive)
+    case .cached: localizer.string(.widgetStatusCached)
+    case .offline: localizer.string(.widgetStatusOffline)
     }
-    .padding(.horizontal, 8)
-    .frame(height: 22)
-    .background(.primary.opacity(0.055), in: Capsule())
-    .help(store.lastErrorDescription ?? localizer.string(.widgetDataSourceHelp))
-    .onAppear {
-      guard !reduceMotion else { return }
-      withAnimation(.easeInOut(duration: 1.4).repeatForever(autoreverses: true)) {
-        isPulsing = true
-      }
-    }
-    .accessibilityElement(children: .ignore)
-    .accessibilityLabel(localizer.string(.widgetConnectionStatusAccessibility))
-    .accessibilityValue(status.title)
   }
 
   private var localizer: AppLocalizer {
@@ -290,80 +271,68 @@ private struct QuotaRing: View {
 
   private var remaining: Int { window?.remainingPercent ?? 0 }
   private var progress: Double { Double(remaining) / 100 }
-
-  private var accent: Color {
-    guard window != nil else { return .secondary }
-    switch remaining {
-    case 51...100: return .primary
-    case 21...50: return .orange
-    default: return .red
-    }
+  private var severity: QuotaSeverity {
+    QuotaSeverity.classify(remainingPercent: window?.remainingPercent)
   }
 
   var body: some View {
-    TimelineView(.periodic(from: .now, by: 60)) { context in
-      ZStack {
-        Circle()
-          .stroke(.primary.opacity(0.08), lineWidth: 7)
-        Circle()
-          .trim(from: 0, to: window == nil ? 0 : max(progress, 0.012))
-          .stroke(
-            AngularGradient(
-              colors: [accent.opacity(0.55), accent, .white.opacity(0.9)],
-              center: .center
-            ),
-            style: StrokeStyle(lineWidth: 7, lineCap: .round)
-          )
-          .rotationEffect(.degrees(-90))
-          .shadow(color: accent.opacity(0.18), radius: 5)
+    ZStack {
+      Circle()
+        .stroke(
+          CodexMeterDesign.ColorToken.track,
+          lineWidth: CodexMeterDesign.Metrics.quotaStroke
+        )
 
-        VStack(spacing: 0) {
-          Text(window == nil ? "—" : localizer.percent(remaining))
-            .font(.system(size: 23, weight: .semibold, design: .rounded))
-            .monospacedDigit()
-            .contentTransition(.numericText(value: Double(remaining)))
-          Text(
-            MetricFormatter.shortQuotaLabel(
-              for: window,
-              fallback: .quotaPrimary,
-              localizer: localizer
-            )
+      Circle()
+        .trim(from: 0, to: window == nil ? 0 : max(progress, 0.012))
+        .stroke(
+          severity.color,
+          style: StrokeStyle(
+            lineWidth: CodexMeterDesign.Metrics.quotaStroke,
+            lineCap: .round
           )
-            .font(.system(size: 8, weight: .semibold, design: .rounded))
-            .tracking(0.8)
-            .foregroundStyle(.secondary)
-          Text(
-            MetricFormatter.compactResetCountdown(
-              until: window?.resetsAt,
-              now: context.date,
-              localizer: localizer
-            )
+        )
+        .rotationEffect(.degrees(-90))
+
+      VStack(spacing: CodexMeterDesign.Spacing.compact) {
+        Text(window == nil ? "—" : localizer.percent(remaining))
+          .font(CodexMeterDesign.Typography.quotaMetric)
+          .monospacedDigit()
+          .contentTransition(.numericText(value: Double(remaining)))
+
+        Text(
+          MetricFormatter.shortQuotaLabel(
+            for: window,
+            fallback: .quotaPrimary,
+            localizer: localizer
           )
-            .font(.system(size: 8.5, weight: .medium, design: .monospaced))
-            .monospacedDigit()
-            .foregroundStyle(.secondary)
-            .lineLimit(1)
-            .minimumScaleFactor(0.9)
-            .frame(maxWidth: 70)
-        }
+        )
+        .font(CodexMeterDesign.Typography.sectionLabel)
+        .tracking(0.7)
+        .foregroundStyle(.secondary)
       }
-      .accessibilityElement(children: .ignore)
-      .accessibilityLabel(
-        MetricFormatter.quotaLabel(
-          for: window,
-          fallback: .quotaPrimaryLimit,
-          localizer: localizer
-        )
-      )
-      .accessibilityValue(
-        MetricFormatter.quotaAccessibilityValue(
-          for: window,
-          now: context.date,
-          localizer: localizer
-        )
-      )
     }
-    .animation(.smooth(duration: reduceMotion ? 0 : 0.48), value: remaining)
+    .accessibilityElement(children: .ignore)
+    .accessibilityLabel(
+      MetricFormatter.quotaLabel(
+        for: window,
+        fallback: .quotaPrimaryLimit,
+        localizer: localizer
+      )
+    )
+    .accessibilityValue(
+      MetricFormatter.quotaAccessibilityValue(
+        for: window,
+        localizer: localizer
+      )
+    )
+    .animation(
+      CodexMeterDesign.Motion.smooth(
+        CodexMeterDesign.Motion.data,
+        reduceMotion: reduceMotion
+      ),
+      value: remaining
+    )
   }
 
   private var localizer: AppLocalizer {
@@ -379,10 +348,13 @@ private struct QuotaBar: View {
 
   private var remaining: Int { window?.remainingPercent ?? 0 }
   private var progress: Double { Double(remaining) / 100 }
+  private var severity: QuotaSeverity {
+    QuotaSeverity.classify(remainingPercent: window?.remainingPercent)
+  }
 
   var body: some View {
-    VStack(spacing: 5) {
-      HStack(spacing: 6) {
+    VStack(spacing: CodexMeterDesign.Spacing.compact) {
+      HStack(spacing: CodexMeterDesign.Spacing.compact) {
         Text(
           MetricFormatter.quotaLabel(
             for: window,
@@ -390,15 +362,15 @@ private struct QuotaBar: View {
             localizer: localizer
           )
         )
-          .font(.system(size: 10, weight: .medium))
+        .font(CodexMeterDesign.Typography.control)
         Text(
           window == nil
             ? "—"
             : localizer.format(.quotaRemainingFormat, localizer.percent(remaining))
         )
-          .font(.system(size: 10, weight: .semibold, design: .rounded))
-          .monospacedDigit()
-          .contentTransition(.numericText(value: Double(remaining)))
+        .font(.system(size: 10, weight: .semibold, design: .rounded))
+        .monospacedDigit()
+        .contentTransition(.numericText(value: Double(remaining)))
 
         Spacer()
 
@@ -409,21 +381,21 @@ private struct QuotaBar: View {
       GeometryReader { proxy in
         ZStack(alignment: .leading) {
           Capsule()
-            .fill(.primary.opacity(0.075))
+            .fill(CodexMeterDesign.ColorToken.track)
           Capsule()
-            .fill(
-              LinearGradient(
-                colors: [.primary.opacity(0.48), .primary.opacity(0.9)],
-                startPoint: .leading,
-                endPoint: .trailing
-              )
-            )
+            .fill(severity.color)
             .frame(width: proxy.size.width * (window == nil ? 0 : progress))
         }
       }
-      .frame(height: 4)
+      .frame(height: 3)
     }
-    .animation(.smooth(duration: reduceMotion ? 0 : 0.48), value: remaining)
+    .animation(
+      CodexMeterDesign.Motion.smooth(
+        CodexMeterDesign.Motion.data,
+        reduceMotion: reduceMotion
+      ),
+      value: remaining
+    )
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(
       MetricFormatter.quotaLabel(
@@ -450,50 +422,77 @@ private struct ResetCountdownView: View {
   var body: some View {
     TimelineView(.periodic(from: .now, by: 60)) { context in
       Text(
-        MetricFormatter.resetCountdown(
+        MetricFormatter.compactResetCountdown(
           until: date,
           now: context.date,
           localizer: languageController.localizer
         )
       )
-        .font(.system(size: 9, weight: .medium, design: .monospaced))
-        .monospacedDigit()
+      .font(CodexMeterDesign.Typography.metadata)
+      .monospacedDigit()
     }
+  }
+}
+
+private struct PrimaryResetCountdown: View {
+  let date: Date?
+
+  @Environment(LanguageController.self) private var languageController
+
+  var body: some View {
+    TimelineView(.periodic(from: .now, by: 60)) { context in
+      HStack(spacing: CodexMeterDesign.Spacing.compact) {
+        Image(systemName: "clock")
+          .font(.system(size: 9, weight: .semibold))
+        Text(
+          MetricFormatter.resetCountdown(
+            until: date,
+            now: context.date,
+            localizer: localizer
+          )
+        )
+        .font(CodexMeterDesign.Typography.metadata)
+        .monospacedDigit()
+        .lineLimit(1)
+      }
+      .foregroundStyle(.secondary)
+      .accessibilityElement(children: .combine)
+    }
+  }
+
+  private var localizer: AppLocalizer {
+    languageController.localizer
   }
 }
 
 private struct ModeButton: View {
   let mode: WidgetPresentationMode
   let isSelected: Bool
-  let showsTitle: Bool
   let action: () -> Void
 
   @Environment(LanguageController.self) private var languageController
 
   var body: some View {
     Button(action: action) {
-      HStack(spacing: 5) {
+      HStack(spacing: CodexMeterDesign.Spacing.compact) {
         Image(systemName: mode.systemImage)
           .font(.system(size: 10, weight: .semibold))
-        if showsTitle {
-          Text(mode.localizedTitle(using: localizer))
-            .font(.system(size: 10, weight: .medium))
-            .transition(.opacity.combined(with: .move(edge: .leading)))
-        }
+        Text(mode.localizedCompactTitle(using: localizer))
+          .font(CodexMeterDesign.Typography.control)
+          .lineLimit(1)
       }
-      .padding(.horizontal, showsTitle ? 8 : 7)
-      .frame(height: 26)
-      .foregroundStyle(isSelected ? .primary : .secondary)
-      .background(
-        .primary.opacity(isSelected ? 0.12 : 0.045),
-        in: Capsule()
+      .frame(
+        width: CodexMeterDesign.Metrics.modeControlWidth,
+        height: CodexMeterDesign.Metrics.controlHeight
       )
-      .overlay {
-        if isSelected {
-          Capsule().strokeBorder(.primary.opacity(0.12), lineWidth: 0.5)
-        }
-      }
-      .contentShape(Capsule())
+      .foregroundStyle(isSelected ? .primary : .secondary)
+      .codexMeterControlBackground(isSelected: isSelected)
+      .contentShape(
+        RoundedRectangle(
+          cornerRadius: CodexMeterDesign.Radius.control,
+          style: .continuous
+        )
+      )
     }
     .buttonStyle(.plain)
     .help(mode.localizedTitle(using: localizer))

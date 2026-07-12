@@ -12,7 +12,9 @@ enum CodexMeterResources {
   }
 
   static func brandImage(forMenuBar: Bool) -> NSImage? {
-    let url = forMenuBar ? menuBarMarkURL : markURL
+    // The compact transparent glyph belongs inside the widget and menu bar.
+    // The full mark is reserved for the app icon and distribution artwork.
+    let url = menuBarMarkURL
     guard let url, let image = NSImage(contentsOf: url) else { return nil }
     image.isTemplate = forMenuBar
     return image

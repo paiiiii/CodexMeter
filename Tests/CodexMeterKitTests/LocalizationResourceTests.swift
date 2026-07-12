@@ -44,6 +44,28 @@ final class LocalizationResourceTests: XCTestCase {
     )
   }
 
+  func testFormatPlaceholdersMatchAcrossSupportedLanguages() throws {
+    let english = AppLocalizer(language: .english)
+    let chinese = AppLocalizer(language: .simplifiedChinese)
+    let expression = try NSRegularExpression(pattern: #"%\d*[@d]"#)
+
+    for key in L10nKey.allCases {
+      let englishPlaceholders = placeholders(
+        in: english.string(key),
+        matching: expression
+      )
+      let chinesePlaceholders = placeholders(
+        in: chinese.string(key),
+        matching: expression
+      )
+      XCTAssertEqual(
+        englishPlaceholders.sorted(),
+        chinesePlaceholders.sorted(),
+        "Placeholder mismatch for \(key.rawValue)"
+      )
+    }
+  }
+
   func testCodexErrorsLocalizeWithoutChangingTheUnderlyingError() {
     let english = AppLocalizer(language: .english)
     let chinese = AppLocalizer(language: .simplifiedChinese)
@@ -61,6 +83,16 @@ final class LocalizationResourceTests: XCTestCase {
       CodexAppServerError.unknownRPC.localizedDescription(using: english),
       "Codex app-server: Unknown RPC error"
     )
+  }
+
+  private func placeholders(
+    in value: String,
+    matching expression: NSRegularExpression
+  ) -> [String] {
+    let range = NSRange(value.startIndex..<value.endIndex, in: value)
+    return expression.matches(in: value, range: range).compactMap { match in
+      Range(match.range, in: value).map { String(value[$0]) }
+    }
   }
 }
 

@@ -15,6 +15,14 @@ public enum WidgetPresentationMode: String, CaseIterable, Identifiable, Sendable
     }
   }
 
+  func localizedCompactTitle(using localizer: AppLocalizer) -> String {
+    switch self {
+    case .floating: localizer.string(.modeFloatingCompact)
+    case .desktop: localizer.string(.modeDesktopCompact)
+    case .hidden: localizer.string(.modeHiddenCompact)
+    }
+  }
+
   public var systemImage: String {
     switch self {
     case .floating: "pin.fill"

@@ -158,7 +158,7 @@ final class MetricFormatterTests: XCTestCase {
         fallback: .quotaPrimary,
         localizer: english
       ),
-      "15M LEFT"
+      "15M WINDOW"
     )
     XCTAssertEqual(
       MetricFormatter.quotaLabel(
@@ -174,7 +174,7 @@ final class MetricFormatterTests: XCTestCase {
         fallback: .quotaPrimary,
         localizer: english
       ),
-      "5H LEFT"
+      "5H WINDOW"
     )
     XCTAssertEqual(
       MetricFormatter.quotaLabel(
@@ -207,7 +207,7 @@ final class MetricFormatterTests: XCTestCase {
         fallback: .quotaPrimary,
         localizer: chinese
       ),
-      "5H 剩余"
+      "5H 窗口"
     )
     XCTAssertEqual(
       MetricFormatter.quotaLabel(

@@ -98,6 +98,16 @@ account/rateLimits/read + account/usage/read
 
 项目采用 Swift Package。可执行 Target 负责应用生命周期，`CodexMeterKit` 则包含用量模型、app-server 客户端、语言资源、UI 与可测试逻辑。Release 脚本会将可执行文件、`Info.plist`、AppIcon 和编译后的 SwiftPM 资源包组装成标准 `.app`。
 
+## 设计系统
+
+CodexMeter 使用项目专属的 **Signal & Silence** 设计系统，以“信息证据优先于装饰”、编辑式留白、语义化额度状态和原生 macOS 体验为核心。它让 5 小时额度保持最明确的主层级，同时让当天 Token 活动和更长周期信息清晰但不喧宾夺主。
+
+- 阅读英文主文档 [Design System](docs/DESIGN_SYSTEM.md)。
+- 查看机器可读的 [design tokens](tokens.json)。
+- 所有可见改动都应按照 [Design QA matrix](docs/DESIGN_QA.md) 验证。
+
+这套系统保留 CodexMeter 黑白克制的基调与薄荷绿品牌信号，并不会照搬其他产品的视觉配色。
+
 可从 1024×1024 源图重新生成应用图标：
 
 ```bash

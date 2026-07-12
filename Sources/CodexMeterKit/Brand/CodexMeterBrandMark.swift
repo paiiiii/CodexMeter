@@ -10,6 +10,8 @@ struct CodexMeterBrandMark: View {
   private let image: NSImage?
   private let isTemplate: Bool
 
+  @Environment(\.colorScheme) private var colorScheme
+
   init(style: Style = .widget) {
     let wantsTemplate = style == .menuBar
     isTemplate = wantsTemplate
@@ -20,15 +22,20 @@ struct CodexMeterBrandMark: View {
     Group {
       if let image {
         Image(nsImage: image)
-          .renderingMode(isTemplate ? .template : .original)
+          .renderingMode(usesTemplateRendering ? .template : .original)
           .resizable()
           .interpolation(.high)
           .scaledToFit()
+          .foregroundStyle(.primary)
       } else {
         Image(systemName: "gauge.with.dots.needle.0percent")
           .font(.system(size: isTemplate ? 12 : 14, weight: .semibold))
       }
     }
     .accessibilityHidden(true)
+  }
+
+  private var usesTemplateRendering: Bool {
+    isTemplate || colorScheme == .dark
   }
 }
