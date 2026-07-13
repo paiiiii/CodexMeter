@@ -25,10 +25,11 @@ enum CodexMeterDesign {
     static let outerInset: CGFloat = 5
     static let contentInset: CGFloat = 16
     static let brandGlyph: CGFloat = 20
-    static let menuBarBrandGlyph: CGFloat = 10
+    static let menuBarBrandGlyph: CGFloat = 20
     static let quotaRing: CGFloat = 84
     static let minimalQuotaRing: CGFloat = 84
     static let quotaStroke: CGFloat = 6
+    static let minimalGlassDiameter = minimalQuotaRing - quotaStroke
     static let controlHeight: CGFloat = 28
     static let iconControl: CGFloat = 28
     static let modeControlWidth: CGFloat = 68
@@ -68,6 +69,7 @@ enum CodexMeterDesign {
   enum Motion {
     static let immediate: TimeInterval = 0.16
     static let standard: TimeInterval = 0.24
+    static let layoutMorph: TimeInterval = 0.38
     static let data: TimeInterval = 0.42
     static let refresh: TimeInterval = 0.85
     static let pulse: TimeInterval = 1.8

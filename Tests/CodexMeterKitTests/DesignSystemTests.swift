@@ -54,7 +54,8 @@ final class DesignSystemTests: XCTestCase {
   func testMotionTokensAreOrderedAndHonorReducedMotion() {
     XCTAssertGreaterThan(CodexMeterDesign.Motion.immediate, 0)
     XCTAssertLessThan(CodexMeterDesign.Motion.immediate, CodexMeterDesign.Motion.standard)
-    XCTAssertLessThan(CodexMeterDesign.Motion.standard, CodexMeterDesign.Motion.data)
+    XCTAssertLessThan(CodexMeterDesign.Motion.standard, CodexMeterDesign.Motion.layoutMorph)
+    XCTAssertLessThan(CodexMeterDesign.Motion.layoutMorph, CodexMeterDesign.Motion.data)
     XCTAssertLessThan(CodexMeterDesign.Motion.data, CodexMeterDesign.Motion.refresh)
     XCTAssertLessThan(CodexMeterDesign.Motion.refresh, CodexMeterDesign.Motion.pulse)
 
@@ -97,10 +98,11 @@ final class DesignSystemTests: XCTestCase {
       CodexMeterDesign.Metrics.quotaRing,
       CodexMeterDesign.Metrics.brandGlyph
     )
-    XCTAssertLessThan(
+    XCTAssertEqual(
       CodexMeterDesign.Metrics.menuBarBrandGlyph,
       CodexMeterDesign.Metrics.brandGlyph
     )
+    XCTAssertEqual(CodexMeterDesign.Metrics.minimalGlassDiameter, 78)
     XCTAssertGreaterThan(
       CodexMeterDesign.Metrics.quotaRing,
       CodexMeterDesign.Metrics.controlHeight

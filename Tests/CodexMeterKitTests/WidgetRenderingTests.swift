@@ -92,6 +92,46 @@ final class WidgetRenderingTests: XCTestCase {
     )
   }
 
+  func testWidgetMorphMidpointRendersAContractingSurface() async throws {
+    let midpointSize = CGSize(width: 229, height: 174)
+    let image = try await renderWidget(
+      language: .english,
+      colorScheme: .light,
+      layoutMode: .full,
+      primaryUsedPercent: 12,
+      renderSize: midpointSize
+    )
+
+    XCTAssertEqual(image.width, Int(midpointSize.width * 2))
+    XCTAssertEqual(image.height, Int(midpointSize.height * 2))
+    let bitmap = NSBitmapImageRep(cgImage: image)
+    XCTAssertLessThan(
+      try XCTUnwrap(bitmap.colorAt(x: 0, y: 0)).alphaComponent,
+      0.05
+    )
+    XCTAssertGreaterThan(
+      try XCTUnwrap(
+        bitmap.colorAt(x: bitmap.pixelsWide / 2, y: bitmap.pixelsHigh / 2)
+      ).alphaComponent,
+      0.95
+    )
+
+    guard
+      let directory = ProcessInfo.processInfo.environment[
+        "CODEX_METER_WIDGET_SNAPSHOT_DIR"
+      ]
+    else { return }
+    try FileManager.default.createDirectory(
+      atPath: directory,
+      withIntermediateDirectories: true
+    )
+    try writePNG(
+      image,
+      to: URL(fileURLWithPath: directory)
+        .appendingPathComponent("widget-morph-midpoint-en-light.png")
+    )
+  }
+
   private func assertCanvas(_ image: CGImage) throws {
     XCTAssertEqual(
       image.width,
@@ -155,7 +195,8 @@ final class WidgetRenderingTests: XCTestCase {
     language: AppLanguage,
     colorScheme: ColorScheme,
     layoutMode: WidgetLayoutMode,
-    primaryUsedPercent: Int = 45
+    primaryUsedPercent: Int = 45,
+    renderSize: CGSize? = nil
   ) async throws -> CGImage {
     let suiteName = "CodexMeterTests.Rendering.\(UUID().uuidString)"
     let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
@@ -201,7 +242,7 @@ final class WidgetRenderingTests: XCTestCase {
     )
     coordinator.setLayoutMode(layoutMode)
 
-    let widgetSize = CodexMeterDesign.Metrics.widgetSize(for: layoutMode)
+    let widgetSize = renderSize ?? CodexMeterDesign.Metrics.widgetSize(for: layoutMode)
 
     let view = WidgetView(store: store, coordinator: coordinator)
       .frame(

@@ -14,77 +14,122 @@ public struct WidgetView: View {
   }
 
   public var body: some View {
-    Group {
-      if contentPolicy.isMinimal {
-        minimalWidget
-          .transition(.scale(scale: 0.88).combined(with: .opacity))
-      } else {
-        fullWidget
-          .transition(.scale(scale: 0.96).combined(with: .opacity))
+    GeometryReader { geometry in
+      let progress = WidgetMorphGeometry.progress(for: geometry.size)
+      let quotaCenter = WidgetMorphGeometry.quotaCenterTopLeading(
+        progress: progress
+      )
+
+      ZStack(alignment: .topLeading) {
+        CodexMeterMorphingGlassSurface(
+          progress: progress,
+          showsSoftShadow: coordinator.mode == .floating
+        )
+
+        fullContent
+          .frame(
+            width: CodexMeterDesign.Metrics.widgetSize.width,
+            height: CodexMeterDesign.Metrics.widgetSize.height,
+            alignment: .topLeading
+          )
+          .scaleEffect(
+            0.72 + 0.28 * progress,
+            anchor: fullQuotaAnchor
+          )
+          .opacity(fullContentOpacity(progress: progress))
+          .mask(WidgetMorphShape(progress: progress))
+          .allowsHitTesting(
+            progress > 0.995 && !coordinator.isLayoutTransitioning
+          )
+          .accessibilityHidden(progress < 0.995)
+
+        QuotaRing(window: store.snapshot?.primary)
+          .frame(
+            width: CodexMeterDesign.Metrics.quotaRing,
+            height: CodexMeterDesign.Metrics.quotaRing
+          )
+          .position(quotaCenter)
+
+        minimalInteractionLayer
+          .position(quotaCenter)
+          .allowsHitTesting(
+            progress < 0.005 && !coordinator.isLayoutTransitioning
+          )
+          .accessibilityHidden(progress >= 0.005)
       }
+      .frame(
+        width: geometry.size.width,
+        height: geometry.size.height,
+        alignment: .topLeading
+      )
+      .clipped()
     }
-    .animation(
-      CodexMeterDesign.Motion.smooth(
-        CodexMeterDesign.Motion.standard,
-        reduceMotion: reduceMotion
-      ),
-      value: coordinator.layoutMode
-    )
   }
 
-  private var fullWidget: some View {
-    CodexMeterSurface {
-      ZStack {
-        AmbientSignal()
+  private var fullContent: some View {
+    ZStack {
+      AmbientSignal()
 
-        VStack(spacing: 0) {
-          header
-          mainMetrics
-            .padding(.top, CodexMeterDesign.Spacing.small)
-          weeklyQuota
-            .padding(.top, CodexMeterDesign.Spacing.small)
-          controls
-            .padding(.top, CodexMeterDesign.Spacing.small)
-        }
-        .padding(CodexMeterDesign.Metrics.contentInset)
+      VStack(spacing: 0) {
+        header
+        mainMetrics
+          .padding(.top, CodexMeterDesign.Spacing.small)
+        weeklyQuota
+          .padding(.top, CodexMeterDesign.Spacing.small)
+        controls
+          .padding(.top, CodexMeterDesign.Spacing.small)
       }
+      .padding(CodexMeterDesign.Metrics.contentInset)
     }
-    .padding(CodexMeterDesign.Metrics.outerInset)
-    .contentShape(
-      RoundedRectangle(
-        cornerRadius: CodexMeterDesign.Radius.surface,
-        style: .continuous
-      )
+    .frame(
+      width:
+        CodexMeterDesign.Metrics.widgetSize.width
+        - CodexMeterDesign.Metrics.outerInset * 2,
+      height:
+        CodexMeterDesign.Metrics.widgetSize.height
+        - CodexMeterDesign.Metrics.outerInset * 2
+    )
+    .offset(
+      x: CodexMeterDesign.Metrics.outerInset,
+      y: CodexMeterDesign.Metrics.outerInset
     )
     .accessibilityElement(children: .contain)
     .accessibilityLabel(localizer.string(.widgetUsageAccessibility))
   }
 
-  private var minimalWidget: some View {
-    ZStack {
-      CodexMeterCircularGlassBackdrop()
-        .padding(CodexMeterDesign.Metrics.quotaStroke / 2)
-
-      QuotaRing(window: store.snapshot?.primary)
-    }
-    .frame(
-      width: CodexMeterDesign.Metrics.minimalQuotaRing,
-      height: CodexMeterDesign.Metrics.minimalQuotaRing
-    )
-    .frame(
-      width: CodexMeterDesign.Metrics.minimalWidgetSize.width,
-      height: CodexMeterDesign.Metrics.minimalWidgetSize.height
-    )
-    .contentShape(Circle())
-    .help(localizer.string(.widgetMinimalHelp))
-    .contextMenu {
-      Button(localizer.string(.widgetRestoreFullView)) {
+  private var minimalInteractionLayer: some View {
+    Circle()
+      .fill(.clear)
+      .frame(
+        width: CodexMeterDesign.Metrics.minimalQuotaRing,
+        height: CodexMeterDesign.Metrics.minimalQuotaRing
+      )
+      .contentShape(Circle())
+      .help(localizer.string(.widgetMinimalHelp))
+      .contextMenu {
+        Button(localizer.string(.widgetRestoreFullView)) {
+          coordinator.setLayoutMode(.full)
+        }
+      }
+      .accessibilityAction(named: Text(localizer.string(.widgetRestoreFullView))) {
         coordinator.setLayoutMode(.full)
       }
-    }
-    .accessibilityAction(named: Text(localizer.string(.widgetRestoreFullView))) {
-      coordinator.setLayoutMode(.full)
-    }
+  }
+
+  private var fullQuotaAnchor: UnitPoint {
+    UnitPoint(
+      x:
+        WidgetMorphGeometry.fullQuotaCenterTopLeading.x
+        / CodexMeterDesign.Metrics.widgetSize.width,
+      y:
+        WidgetMorphGeometry.fullQuotaCenterTopLeading.y
+        / CodexMeterDesign.Metrics.widgetSize.height
+    )
+  }
+
+  private func fullContentOpacity(progress: CGFloat) -> Double {
+    let normalized = min(max((progress - 0.42) / 0.48, 0), 1)
+    return Double(normalized * normalized * (3 - 2 * normalized))
   }
 
   private var header: some View {
@@ -159,7 +204,7 @@ public struct WidgetView: View {
 
   private var mainMetrics: some View {
     HStack(spacing: CodexMeterDesign.Spacing.large) {
-      QuotaRing(window: store.snapshot?.primary)
+      Color.clear
         .frame(
           width: CodexMeterDesign.Metrics.quotaRing,
           height: CodexMeterDesign.Metrics.quotaRing
@@ -274,9 +319,6 @@ public struct WidgetView: View {
     languageController.localizer
   }
 
-  private var contentPolicy: WidgetContentPolicy {
-    WidgetContentPolicy.policy(for: coordinator.layoutMode)
-  }
 }
 
 private struct AmbientSignal: View {
@@ -348,22 +390,40 @@ private struct QuotaRing: View {
 
   var body: some View {
     ZStack {
-      Circle()
-        .stroke(
-          CodexMeterDesign.ColorToken.track,
-          lineWidth: CodexMeterDesign.Metrics.quotaStroke
-        )
+      ZStack {
+        if window == nil {
+          Circle()
+            .stroke(
+              CodexMeterDesign.ColorToken.track,
+              lineWidth: CodexMeterDesign.Metrics.quotaStroke
+            )
+        } else {
+          let progressEnd = max(progress, 0.012)
 
-      Circle()
-        .trim(from: 0, to: window == nil ? 0 : max(progress, 0.012))
-        .stroke(
-          severity.color,
-          style: StrokeStyle(
-            lineWidth: CodexMeterDesign.Metrics.quotaStroke,
-            lineCap: .round
-          )
-        )
-        .rotationEffect(.degrees(-90))
+          Circle()
+            .trim(from: progressEnd, to: 1)
+            .stroke(
+              CodexMeterDesign.ColorToken.track,
+              style: StrokeStyle(
+                lineWidth: CodexMeterDesign.Metrics.quotaStroke,
+                lineCap: .round
+              )
+            )
+            .rotationEffect(.degrees(-90))
+
+          Circle()
+            .trim(from: 0, to: progressEnd)
+            .stroke(
+              severity.color,
+              style: StrokeStyle(
+                lineWidth: CodexMeterDesign.Metrics.quotaStroke,
+                lineCap: .round
+              )
+            )
+            .rotationEffect(.degrees(-90))
+        }
+      }
+      .compositingGroup()
 
       VStack(spacing: CodexMeterDesign.Spacing.compact) {
         Text(window == nil ? "—" : localizer.percent(remaining))

@@ -47,22 +47,41 @@ final class WidgetLayoutModeTests: XCTestCase {
     XCTAssertFalse(minimal.showsControls)
   }
 
-  func testFrameResizeKeepsTopRightAnchorAndClampsToScreen() {
+  func testMorphResizeKeepsQuotaCenterFixedAndClampsToScreen() {
     let fullFrame = NSRect(x: 900, y: 500, width: 348, height: 238)
-    let minimalFrame = WidgetWindowGeometry.frameAnchoredTopRight(
+    let minimalFrame = WidgetMorphGeometry.framePreservingQuotaCenter(
       from: fullFrame,
       targetSize: WidgetWindowGeometry.size(for: .minimal)
     )
 
-    XCTAssertEqual(minimalFrame.maxX, fullFrame.maxX)
-    XCTAssertEqual(minimalFrame.maxY, fullFrame.maxY)
+    XCTAssertEqual(minimalFrame.origin, CGPoint(x: 908, y: 584))
     XCTAssertEqual(minimalFrame.size, NSSize(width: 110, height: 110))
 
-    let restoredFrame = WidgetWindowGeometry.frameAnchoredTopRight(
+    let fullScreenCenter = CGPoint(
+      x: fullFrame.minX + 63,
+      y: fullFrame.minY + 139
+    )
+    let minimalScreenCenter = CGPoint(
+      x: minimalFrame.minX + 55,
+      y: minimalFrame.minY + 55
+    )
+    XCTAssertEqual(minimalScreenCenter, fullScreenCenter)
+
+    let restoredFrame = WidgetMorphGeometry.framePreservingQuotaCenter(
       from: minimalFrame,
       targetSize: WidgetWindowGeometry.size(for: .full)
     )
     XCTAssertEqual(restoredFrame, fullFrame)
+
+    XCTAssertEqual(
+      WidgetMorphGeometry.progress(for: NSSize(width: 229, height: 174)),
+      0.5,
+      accuracy: 0.001
+    )
+    XCTAssertEqual(
+      WidgetMorphGeometry.surfaceRect(progress: 0.5),
+      CGRect(x: 10.5, y: 10.5, width: 208, height: 153)
+    )
 
     let visibleFrame = NSRect(x: 0, y: 0, width: 1_000, height: 700)
     let offscreen = NSRect(x: 960, y: 660, width: 110, height: 110)
@@ -78,6 +97,37 @@ final class WidgetLayoutModeTests: XCTestCase {
     XCTAssertEqual(WidgetLayoutMode.minimal.localizedTitle(using: chinese), "最小化")
     XCTAssertEqual(english.string(.menuUseMinimalLayout), "Use Minimal View")
     XCTAssertEqual(chinese.string(.menuUseFullLayout), "恢复完整视图")
+  }
+
+  func testSystemWindowShadowIsLimitedToSettledFloatingFullLayout() {
+    XCTAssertTrue(
+      WidgetPanelShadowPolicy.shouldShowSystemShadow(
+        mode: .floating,
+        layoutMode: .full,
+        isLayoutTransitioning: false
+      )
+    )
+    XCTAssertFalse(
+      WidgetPanelShadowPolicy.shouldShowSystemShadow(
+        mode: .floating,
+        layoutMode: .minimal,
+        isLayoutTransitioning: false
+      )
+    )
+    XCTAssertFalse(
+      WidgetPanelShadowPolicy.shouldShowSystemShadow(
+        mode: .floating,
+        layoutMode: .full,
+        isLayoutTransitioning: true
+      )
+    )
+    XCTAssertFalse(
+      WidgetPanelShadowPolicy.shouldShowSystemShadow(
+        mode: .desktop,
+        layoutMode: .full,
+        isLayoutTransitioning: false
+      )
+    )
   }
 
   @MainActor

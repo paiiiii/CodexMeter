@@ -11,10 +11,13 @@ All notable changes to CodexMeter are documented in this file.
 
 ### Changed
 
-- The widget window now resizes smoothly between 348 × 238 pt and 110 × 110 pt while preserving its top-right position and presentation mode.
+- The widget window now morphs smoothly between 348 × 238 pt and 110 × 110 pt around the primary quota ring while preserving its presentation mode.
 - Added layout persistence, window-geometry, localization, and Retina rendering coverage for the Minimal layout.
 - Added a circular native-glass backdrop inside the Minimal quota ring while keeping the surrounding window transparent.
 - Fixed the menu-bar template image's intrinsic point size so its 64 px source cannot expand to fill the status-bar height.
+- Replaced the full/minimal view swap with one persistent quota ring and a geometry-driven glass surface, so every panel edge contracts into the ring and expands back from it.
+- Removed the hard system-window shadow and redundant normal-contrast border from Minimal mode, eliminating the dark aliased fringe around the ring.
+- Matched the menu-bar glyph's 20 pt optical footprint to neighboring native status items.
 
 ## [0.4.0] - 2026-07-12
 

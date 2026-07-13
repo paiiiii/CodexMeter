@@ -89,6 +89,7 @@ All transitions share the standard `0.22, 1, 0.36, 1` curve.
 | --- | ---: | --- |
 | `fast` | 0.16 s | Hover, press, compact control response |
 | `standard` | 0.24 s | Selection and surface state change |
+| `layoutMorph` | 0.38 s | Full-panel contraction into the primary quota ring and reverse expansion |
 | `data` | 0.42 s | Quota and metric value transition |
 | `refresh` | 0.85 s | One refresh rotation |
 | `pulse` | 1.8 s | Low-frequency live/syncing pulse when it conveys activity |
@@ -105,6 +106,8 @@ Animation must not resize a control or move a neighboring hit target. With Reduc
 - Keeps its information hierarchy in floating, desktop, and restored states.
 - Uses an opaque fallback for reduced transparency and sufficient contrast in light and dark appearances.
 - Minimal layout removes the surface, header, token activity, secondary quota, and controls. The full layout can be restored from the ring context menu, menu bar, Settings, or its accessibility action.
+- Full/Minimal transitions keep one persistent quota ring at a fixed screen position. The glass outline interpolates from the 338 × 228 pt surface to a 78 pt circle while details scale toward the ring and fade; Reduce Motion switches immediately.
+- Floating system-window shadow is disabled during the morph and in Minimal layout. Minimal depth comes only from a soft shadow on the inner glass, avoiding a hard fringe around the quota stroke.
 
 ### Brand Header
 
@@ -158,7 +161,7 @@ Settings remain a native macOS form rather than a miniature copy of the widget. 
 | Asset | Role | Rules |
 | --- | --- | --- |
 | `Resources/AppIcon.png` / `AppIcon.icns` | Installed application identity | Packaging, Finder, alerts, and About contexts; never shrink into the widget header |
-| `Sources/CodexMeterKit/Resources/CodexMeterMenuBarMark.png` | Transparent glyph master | Render in color at 20 pt in the widget; force a 10 pt intrinsic template-image size in the macOS menu bar so AppKit cannot expand the 64 px source |
+| `Sources/CodexMeterKit/Resources/CodexMeterMenuBarMark.png` | Transparent glyph master | Render at 20 pt in both the widget and macOS menu bar; force the menu-bar template's intrinsic point size so AppKit cannot expand the 64 px source |
 | `Sources/CodexMeterKit/Resources/CodexMeterMark.png` | Contained legacy mark | Use only where an intentional app-icon-like container is required; do not nest it inside glass or another rounded tile |
 
 Keep transparent bounds tight enough for optical alignment. Verify the menu-bar rendering independently because template tinting may remove the glyph's source colors.

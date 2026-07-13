@@ -38,11 +38,147 @@ struct WidgetWindowGeometry {
   }
 }
 
+struct WidgetMorphGeometry {
+  static let fullQuotaCenterTopLeading = CGPoint(x: 63, y: 99)
+  static let minimalQuotaCenterTopLeading = CGPoint(x: 55, y: 55)
+
+  static func progress(for size: CGSize) -> CGFloat {
+    let range =
+      CodexMeterDesign.Metrics.widgetSize.width
+      - CodexMeterDesign.Metrics.minimalWidgetSize.width
+    guard range > 0 else { return 1 }
+    return min(
+      max(
+        (size.width - CodexMeterDesign.Metrics.minimalWidgetSize.width) / range,
+        0
+      ),
+      1
+    )
+  }
+
+  static func quotaCenterTopLeading(progress: CGFloat) -> CGPoint {
+    interpolate(
+      from: minimalQuotaCenterTopLeading,
+      to: fullQuotaCenterTopLeading,
+      progress: progress
+    )
+  }
+
+  static func quotaCenterBottomLeading(progress: CGFloat) -> CGPoint {
+    let minimalSize = CodexMeterDesign.Metrics.minimalWidgetSize
+    let fullSize = CodexMeterDesign.Metrics.widgetSize
+    return interpolate(
+      from: CGPoint(
+        x: minimalQuotaCenterTopLeading.x,
+        y: minimalSize.height - minimalQuotaCenterTopLeading.y
+      ),
+      to: CGPoint(
+        x: fullQuotaCenterTopLeading.x,
+        y: fullSize.height - fullQuotaCenterTopLeading.y
+      ),
+      progress: progress
+    )
+  }
+
+  static func framePreservingQuotaCenter(
+    from currentFrame: NSRect,
+    targetSize: NSSize
+  ) -> NSRect {
+    let currentCenter = quotaCenterBottomLeading(
+      progress: progress(for: currentFrame.size)
+    )
+    let screenCenter = CGPoint(
+      x: currentFrame.minX + currentCenter.x,
+      y: currentFrame.minY + currentCenter.y
+    )
+    let targetCenter = quotaCenterBottomLeading(
+      progress: progress(for: targetSize)
+    )
+    return NSRect(
+      x: screenCenter.x - targetCenter.x,
+      y: screenCenter.y - targetCenter.y,
+      width: targetSize.width,
+      height: targetSize.height
+    )
+  }
+
+  static func surfaceRect(progress: CGFloat) -> CGRect {
+    let fullSize = CodexMeterDesign.Metrics.widgetSize
+    let fullRect = CGRect(
+      x: CodexMeterDesign.Metrics.outerInset,
+      y: CodexMeterDesign.Metrics.outerInset,
+      width: fullSize.width - CodexMeterDesign.Metrics.outerInset * 2,
+      height: fullSize.height - CodexMeterDesign.Metrics.outerInset * 2
+    )
+    let minimalGlassDiameter = CodexMeterDesign.Metrics.minimalGlassDiameter
+    let minimalRect = CGRect(
+      x: minimalQuotaCenterTopLeading.x - minimalGlassDiameter / 2,
+      y: minimalQuotaCenterTopLeading.y - minimalGlassDiameter / 2,
+      width: minimalGlassDiameter,
+      height: minimalGlassDiameter
+    )
+    return interpolate(from: minimalRect, to: fullRect, progress: progress)
+  }
+
+  static func surfaceCornerRadius(progress: CGFloat) -> CGFloat {
+    interpolate(
+      from: CodexMeterDesign.Metrics.minimalGlassDiameter / 2,
+      to: CodexMeterDesign.Radius.surface,
+      progress: progress
+    )
+  }
+
+  private static func interpolate(
+    from start: CGFloat,
+    to end: CGFloat,
+    progress: CGFloat
+  ) -> CGFloat {
+    start + (end - start) * min(max(progress, 0), 1)
+  }
+
+  private static func interpolate(
+    from start: CGPoint,
+    to end: CGPoint,
+    progress: CGFloat
+  ) -> CGPoint {
+    CGPoint(
+      x: interpolate(from: start.x, to: end.x, progress: progress),
+      y: interpolate(from: start.y, to: end.y, progress: progress)
+    )
+  }
+
+  private static func interpolate(
+    from start: CGRect,
+    to end: CGRect,
+    progress: CGFloat
+  ) -> CGRect {
+    CGRect(
+      x: interpolate(from: start.minX, to: end.minX, progress: progress),
+      y: interpolate(from: start.minY, to: end.minY, progress: progress),
+      width: interpolate(from: start.width, to: end.width, progress: progress),
+      height: interpolate(from: start.height, to: end.height, progress: progress)
+    )
+  }
+}
+
+struct WidgetPanelShadowPolicy {
+  static func shouldShowSystemShadow(
+    mode: WidgetPresentationMode,
+    layoutMode: WidgetLayoutMode,
+    isLayoutTransitioning: Bool
+  ) -> Bool {
+    WindowModePolicy.policy(for: mode).hasShadow
+      && layoutMode == .full
+      && !isLayoutTransitioning
+  }
+}
+
 @MainActor
 @Observable
 public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   public private(set) var mode: WidgetPresentationMode
   public private(set) var layoutMode: WidgetLayoutMode
+  public private(set) var isLayoutTransitioning = false
 
   private enum Keys {
     static let mode = "CodexMeter.presentationMode"
@@ -57,6 +193,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   private var lastVisibleMode: WidgetPresentationMode
   private var hasStarted = false
   private var transitionID = UUID()
+  private var layoutTransitionID = UUID()
 
   @ObservationIgnored
   private lazy var panel: CodexMeterPanel = makePanel()
@@ -116,7 +253,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   }
 
   public func setLayoutMode(_ newLayoutMode: WidgetLayoutMode) {
-    guard layoutMode != newLayoutMode else { return }
+    guard layoutMode != newLayoutMode, !isLayoutTransitioning else { return }
     layoutMode = newLayoutMode
     defaults.set(newLayoutMode.rawValue, forKey: Keys.layoutMode)
     guard hasStarted else { return }
@@ -167,7 +304,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     panel.title = "CodexMeter"
     panel.isOpaque = false
     panel.backgroundColor = .clear
-    panel.hasShadow = true
+    panel.hasShadow = false
     panel.isReleasedWhenClosed = false
     panel.hidesOnDeactivate = false
     panel.becomesKeyOnlyIfNeeded = true
@@ -181,6 +318,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     )
     panel.contentView?.wantsLayer = true
     panel.contentView?.layer?.backgroundColor = .clear
+    panel.contentView?.layerContentsRedrawPolicy = .duringViewResize
 
     let restored = panel.setFrameUsingName(Keys.frameName)
     if restored {
@@ -201,6 +339,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   }
 
   private func apply(_ mode: WidgetPresentationMode, animated: Bool) {
+    settleLayoutTransitionIfNeeded()
     let policy = WindowModePolicy.policy(for: mode)
     let currentTransitionID = UUID()
     transitionID = currentTransitionID
@@ -231,7 +370,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     panel.level = policy.level
     panel.collectionBehavior = policy.collectionBehavior
     panel.isFloatingPanel = policy.isFloatingPanel
-    panel.hasShadow = policy.hasShadow
+    updatePanelShadow()
     panel.setFrame(
       WidgetWindowGeometry.frameAnchoredTopRight(
         from: panel.frame,
@@ -253,7 +392,51 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   }
 
   private func resizePanel(animated: Bool) {
-    let targetFrame = WidgetWindowGeometry.frameAnchoredTopRight(
+    let clampedFrame = layoutTargetFrame()
+    let shouldAnimate =
+      animated
+      && panel.isVisible
+      && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    guard shouldAnimate else {
+      panel.setFrame(clampedFrame, display: true)
+      isLayoutTransitioning = false
+      panel.isMovableByWindowBackground = true
+      updatePanelShadow()
+      return
+    }
+
+    let currentLayoutTransitionID = UUID()
+    layoutTransitionID = currentLayoutTransitionID
+    isLayoutTransitioning = true
+    panel.isMovableByWindowBackground = false
+    panel.hasShadow = false
+
+    NSAnimationContext.runAnimationGroup { context in
+      context.duration = CodexMeterDesign.Motion.layoutMorph
+      context.timingFunction = CAMediaTimingFunction(
+        controlPoints: 0.22,
+        1,
+        0.36,
+        1
+      )
+      context.allowsImplicitAnimation = true
+      panel.animator().setFrame(clampedFrame, display: true)
+    } completionHandler: { [weak self] in
+      Task { @MainActor [weak self] in
+        guard
+          let self,
+          self.layoutTransitionID == currentLayoutTransitionID
+        else { return }
+        self.panel.setFrame(clampedFrame, display: true)
+        self.isLayoutTransitioning = false
+        self.panel.isMovableByWindowBackground = true
+        self.updatePanelShadow()
+      }
+    }
+  }
+
+  private func layoutTargetFrame() -> NSRect {
+    let targetFrame = WidgetMorphGeometry.framePreservingQuotaCenter(
       from: panel.frame,
       targetSize: widgetSize
     )
@@ -261,14 +444,31 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
       panel.screen
       ?? NSScreen.screens.first(where: { $0.frame.intersects(panel.frame) })
       ?? NSScreen.main
-    let clampedFrame = screen.map {
+    return screen.map {
       WidgetWindowGeometry.clampedFrame(targetFrame, to: $0.visibleFrame)
     } ?? targetFrame
-    let shouldAnimate =
-      animated
-      && panel.isVisible
-      && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
-    panel.setFrame(clampedFrame, display: true, animate: shouldAnimate)
+  }
+
+  private func settleLayoutTransitionIfNeeded() {
+    guard isLayoutTransitioning else { return }
+    layoutTransitionID = UUID()
+    panel.setFrame(layoutTargetFrame(), display: true)
+    isLayoutTransitioning = false
+    panel.isMovableByWindowBackground = true
+    updatePanelShadow()
+  }
+
+  private func updatePanelShadow() {
+    let shouldShowSystemShadow = WidgetPanelShadowPolicy.shouldShowSystemShadow(
+      mode: mode,
+      layoutMode: layoutMode,
+      isLayoutTransitioning: isLayoutTransitioning
+    )
+    guard panel.hasShadow != shouldShowSystemShadow else { return }
+    panel.hasShadow = shouldShowSystemShadow
+    if shouldShowSystemShadow {
+      panel.invalidateShadow()
+    }
   }
 
   private func positionAtTopRight(_ panel: NSWindow) {
@@ -294,6 +494,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   }
 
   @objc private func screenConfigurationDidChange() {
+    settleLayoutTransitionIfNeeded()
     clampToVisibleScreen(panel)
   }
 

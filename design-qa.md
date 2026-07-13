@@ -1,54 +1,57 @@
-# CodexMeter Circular Glass and Menu-Bar Mark QA
+# CodexMeter Morph, Edge, and Menu-Bar Size QA
 
 ## Comparison Targets
 
-- Menu-bar source visual truth: `/var/folders/26/1jhmqmk9267cy_p2r59v5cd00000gn/T/TemporaryItems/NSIRD_screencaptureui_dst5oX/Screenshot 2026-07-12 at 9.32.06 PM.png`
-- Minimal-ring source visual truth: `/Users/paiii/Desktop/Screenshot 2026-07-12 at 8.51.54 PM.png`
-- Installed menu-bar implementation: `QA/glass-menubar/menu-bar-runtime-after.png`
-- Installed circular-glass implementation: `QA/glass-menubar/widget-glass-runtime.png` and `QA/glass-menubar/widget-glass-on-desktop.png`
-- Menu-bar source viewport: 241 × 198 px; focused status-bar region: 241 × 36 px
-- Menu-bar implementation viewport: 660 × 84 px; focused status-bar region: 660 × 64 px at native 2× Retina scale
-- Minimal-ring source viewport: 218 × 214 px
-- Installed ring context capture: 370 × 370 px at native 2× Retina scale; the production panel remains 110 × 110 pt
-- State: live account data, Minimal layout, English labels, dark app content behind the glass, blue macOS menu-bar tint
+- Aliased-edge source truth: `/var/folders/26/1jhmqmk9267cy_p2r59v5cd00000gn/T/TemporaryItems/NSIRD_screencaptureui_b5KHd6/Screenshot 2026-07-12 at 10.06.35 PM.png`
+- Undersized menu-bar source truth: `/var/folders/26/1jhmqmk9267cy_p2r59v5cd00000gn/T/TemporaryItems/NSIRD_screencaptureui_Jh2u6N/Screenshot 2026-07-12 at 10.09.23 PM.png`
+- Installed Minimal window: `QA/morph-refinement/widget-minimal-window-final.png`
+- Installed Minimal window in desktop context: `QA/morph-refinement/widget-minimal-context-final.png`
+- Installed menu-bar implementation: `QA/morph-refinement/menu-bar-runtime.png`
+- Installed shrink animation: `QA/morph-refinement/shrink-animation-final.mov`
+- Edge source viewport: 272 × 254 px; installed window viewport: 220 × 220 px (110 × 110 pt at 2× Retina scale)
+- Menu source viewport: 206 × 79 px; installed external-display capture: 430 × 42 px at 1× scale
+- State: floating presentation, Minimal/Full transition, live seven-day quota, dark content behind native glass, blue macOS menu-bar tint
 
 ## Evidence
 
-- Full and focused menu-bar comparison: `QA/glass-menubar/menu-bar-before-after-comparison.png`
-- Full and focused circular-glass comparison: `QA/glass-menubar/widget-glass-comparison.png`
-- Deterministic English light render: `QA/glass-menubar/widget-minimal-en-light.png`
-- Deterministic Simplified Chinese dark render: `QA/glass-menubar/widget-minimal-zh-dark.png`
-- Focused regions are used because the menu-bar template mark and circular glass treatment are the only changed visual surfaces.
+- Focused edge before/after: `QA/morph-refinement/edge-before-after-comparison.png`
+- Focused menu-bar size before/after: `QA/morph-refinement/menu-bar-size-comparison.png`
+- Full transition sequence: `QA/morph-refinement/shrink-animation-contact-sheet.png`
+- Focused 20 fps transition sequence: `QA/morph-refinement/shrink-animation-detail.png`
+- Deterministic midpoint render: `QA/morph-refinement/widget-morph-midpoint-en-light.png`
+- English light and Simplified Chinese dark settled renders: `QA/morph-refinement/widget-minimal-en-light.png` and `QA/morph-refinement/widget-minimal-zh-dark.png`
 
 ## Findings
 
 No actionable P0, P1, or P2 differences remain.
 
-- Fonts and typography: quota percentage, window label, menu-bar percentage, weights, tracking, baselines, and tabular digits remain unchanged. Live percentages differ between captures because account usage refreshed during QA.
-- Spacing and layout rhythm: the 84 pt ring and 110 pt transparent panel are unchanged. The glass is inset by half the 6 pt quota stroke, so it fills the center without extending beyond the ring. The menu-bar mark now occupies a true 10 pt intrinsic footprint and aligns optically with the percentage text instead of filling the menu-bar height.
-- Colors and visual tokens: the quota keeps the existing semantic mint signal and quiet track. The center uses native macOS glass, adapts to light/dark content, and falls back to an opaque system background when Reduce Transparency is enabled.
-- Image quality and asset fidelity: the supplied 64 × 64 px transparent template asset is preserved at full source resolution. Only its `NSImage` intrinsic point size is fixed to 10 pt, preventing `MenuBarExtra` from expanding it before SwiftUI layout. No replacement asset or code-drawn logo was introduced.
-- Copy and content: `7D WINDOW` remains service-driven live content. The installed runtime capture shows the same label while the deterministic test fixture continues to exercise a five-hour window.
-- Transparency: screen capture over real app content shows the region outside the ring remains fully transparent while content behind the circular center is visibly softened and darkened by native glass.
+- Fonts and typography: percentage, quota label, token metrics, metadata, and status-bar percentage retain their established system-font roles. The persistent quota ring does not scale during the layout morph, so its type remains sharp and stable instead of being raster-scaled.
+- Spacing and layout rhythm: the quota ring keeps one fixed screen-space center throughout the transition. The 338 × 228 pt full glass surface contracts continuously into a 78 pt circle inside the 84 pt ring, and expands along the exact reverse path. Full details scale toward that focal point and fade before clipping becomes visually noisy.
+- Colors and visual tokens: semantic mint, quiet track, native glass, and light/dark adaptation remain unchanged. Normal-contrast Minimal glass no longer adds a redundant dark border; Increased Contrast retains a one-point semantic border.
+- Image quality and edge fidelity: the hard one-pixel dark contour is absent in the installed capture. Minimal mode and transition frames disable the `NSPanel` system shadow; a soft SwiftUI shadow is applied only to the inner glass, not to the quota stroke. Progress and remaining track arcs no longer overlap underneath each other's antialiased edges.
+- Icons and assets: the original 64 × 64 px transparent template master remains unchanged. Its AppKit intrinsic size and SwiftUI frame are both 20 pt, producing an optical footprint equal to the neighboring ChatGPT and `zm` status items.
+- Copy and content: all live labels remain service-driven; the capture-to-capture percentage change is expected account usage, not design drift.
+- Motion and interaction: the video and 20 fps sequence show the full panel edges converging on the stationary circle, with the reverse expansion verified separately. Window frame, glass shape, content opacity, and hit testing share one geometry progress. Reduce Motion bypasses the intermediate frames.
 
 ## Comparison History
 
-1. Initial menu-bar evidence showed the 64 px template image expanding to nearly the full status-bar height despite a 10 pt SwiftUI frame (P1).
-2. The template image's intrinsic AppKit point size was fixed to the shared 10 pt menu-bar token. Post-fix runtime evidence shows the glyph aligned with the percentage text and neighboring native status items.
-3. The first Minimal implementation kept the ring center fully transparent. A native circular glass backdrop was added behind the ring content while preserving transparent outer corners (P2 resolved).
-4. Post-fix runtime and deterministic captures confirm the circular glass, transparent canvas, light/dark adaptation, and compact menu-bar glyph.
+1. Initial Minimal evidence showed a continuous near-black one-pixel contour outside the green ring (P1). Root cause was the floating `NSPanel` system shadow following the transparent window's quota-stroke alpha, compounded by a normal-contrast glass border. Minimal/transition system shadow and the redundant border were removed; post-fix edge evidence is clean.
+2. The previous Full/Minimal implementation swapped two complete view trees and resized from the panel's top-right corner (P1). The primary quota ring jumped roughly 230 pt horizontally instead of acting as the focal point. The implementation now keeps one persistent ring, preserves its global center, and derives the glass/content morph from the live window size. Post-fix video shows continuous contraction and reverse expansion.
+3. The 10 pt status-bar glyph was visibly smaller than adjacent icons (P2). It was increased to 20 pt after measuring the neighboring 28–34 px optical bounds. Post-fix capture shows matched icon scale without returning to the original 64 pt expansion bug.
 
 ## Interaction and Runtime Checks
 
-- The Release app is running from `~/Applications/CodexMeter.app` in Minimal layout.
-- Core Graphics reports the production panel at exactly 110 × 110 pt.
-- The full Swift test suite passes: 44 tests, 0 failures, with the opt-in live account integration test skipped by default.
-- Rendering tests assert transparent outer corners and an opaque accessibility/test fallback at the center.
-- Brand-resource tests assert a 10 pt intrinsic menu-bar size while retaining the 64 × 64 px source representation.
+- Menu-bar commands were used to run both Minimal → Full and Full → Minimal production transitions.
+- Final Core Graphics window bounds are exactly 110 × 110 pt in Minimal mode; Full mode reaches exactly 348 × 238 pt.
+- The quota center remains invariant in pure-geometry tests, including the reverse transformation.
+- Controls and dragging are disabled only during the 0.38 s morph and restored on completion.
+- System-window shadow policy is covered for settled floating Full, Minimal, transition, and Desktop states.
+- The full Swift suite passes: 46 tests, 0 failures, with one opt-in live account test skipped by default.
+- Release signing, packaged resources, localization plists, design tokens, and whitespace validation pass.
 - Browser and browser-console checks are not applicable to this native macOS implementation.
 
 ## Follow-up Polish
 
-- P3: add a future automated `NSStatusItem` host integration test if macOS exposes a stable screenshot harness for menu-bar extras.
+- P3: capture the same production morph on macOS 14 hardware to supplement the tested `.ultraThinMaterial` fallback path.
 
 final result: passed

@@ -20,7 +20,7 @@ CodexMeter is a native, local-first macOS menu-bar companion for monitoring Code
   - **Always on Top** keeps the widget above regular windows across Spaces.
   - **Desktop** places it behind regular windows as a low-distraction desktop companion.
   - **Hidden** dismisses the widget until it is restored from the menu bar.
-- Offers an independent **Minimal** layout that keeps only the primary quota ring, a circular native-glass backdrop, and its center content. Restore the full layout from the ring's context menu, the menu bar, or Settings.
+- Offers an independent **Minimal** layout that keeps only the primary quota ring, a circular native-glass backdrop, and its center content. The full panel continuously contracts into that ring and expands back from it; restore it from the ring's context menu, the menu bar, or Settings.
 - Follows the macOS language automatically, with instant in-app overrides for English and Simplified Chinese.
 - Uses native macOS glass, rounded surfaces, light/dark appearance, and reduced-motion/transparency accessibility settings.
 - Lives in the menu bar without occupying the Dock (`LSUIElement`).

@@ -93,32 +93,91 @@ struct CodexMeterInsetSurface<Content: View>: View {
   }
 }
 
-struct CodexMeterCircularGlassBackdrop: View {
+struct WidgetMorphShape: InsettableShape {
+  var progress: CGFloat
+  var insetAmount: CGFloat = 0
+
+  var animatableData: CGFloat {
+    get { progress }
+    set { progress = newValue }
+  }
+
+  func path(in rect: CGRect) -> Path {
+    let surfaceRect = WidgetMorphGeometry.surfaceRect(progress: progress)
+      .insetBy(dx: insetAmount, dy: insetAmount)
+    let radius = max(
+      WidgetMorphGeometry.surfaceCornerRadius(progress: progress) - insetAmount,
+      0
+    )
+    return Path(
+      roundedRect: surfaceRect,
+      cornerRadius: radius,
+      style: .continuous
+    )
+  }
+
+  func inset(by amount: CGFloat) -> WidgetMorphShape {
+    var shape = self
+    shape.insetAmount += amount
+    return shape
+  }
+}
+
+struct CodexMeterMorphingGlassSurface: View {
+  let progress: CGFloat
+  let showsSoftShadow: Bool
+
   @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
   @Environment(\.codexMeterForceOpaqueSurface) private var forceOpaqueSurface
   @Environment(\.colorSchemeContrast) private var colorSchemeContrast
 
   var body: some View {
+    let shape = WidgetMorphShape(progress: progress)
+
     Group {
       if reduceTransparency || forceOpaqueSurface {
-        Circle()
+        shape
           .fill(Color(nsColor: .windowBackgroundColor))
       } else if #available(macOS 26.0, *) {
-        Circle()
-          .fill(.clear)
-          .glassEffect(.regular, in: .circle)
+        Color.clear
+          .frame(maxWidth: .infinity, maxHeight: .infinity)
+          .glassEffect(.regular, in: shape)
       } else {
-        Circle()
+        shape
           .fill(.ultraThinMaterial)
       }
     }
     .overlay {
-      Circle()
+      shape
         .strokeBorder(
-          Color.primary.opacity(colorSchemeContrast == .increased ? 0.20 : 0.08),
-          lineWidth: colorSchemeContrast == .increased ? 1 : 0.5
+          Color.primary.opacity(surfaceBorderOpacity),
+          lineWidth: surfaceBorderWidth
         )
     }
+    .compositingGroup()
+    .shadow(
+      color: .black.opacity(softShadowOpacity),
+      radius: 8,
+      x: 0,
+      y: 3
+    )
+  }
+
+  private var surfaceBorderOpacity: Double {
+    if colorSchemeContrast == .increased {
+      return Double(0.20 + 0.04 * progress)
+    }
+    return Double(0.12 * progress)
+  }
+
+  private var surfaceBorderWidth: CGFloat {
+    if colorSchemeContrast == .increased { return 1 }
+    return 0.6 * progress
+  }
+
+  private var softShadowOpacity: Double {
+    guard showsSoftShadow else { return 0 }
+    return Double(0.12 * (1 - progress))
   }
 }
 
