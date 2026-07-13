@@ -25,6 +25,7 @@ enum CodexMeterDesign {
     static let outerInset: CGFloat = 5
     static let contentInset: CGFloat = 16
     static let brandGlyph: CGFloat = 20
+    static let menuBarBrandGlyph: CGFloat = 10
     static let quotaRing: CGFloat = 84
     static let minimalQuotaRing: CGFloat = 84
     static let quotaStroke: CGFloat = 6

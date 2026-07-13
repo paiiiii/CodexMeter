@@ -100,7 +100,7 @@ Animation must not resize a control or move a neighboring hit target. With Reduc
 ### Widget Surface
 
 - Full design canvas: 348 × 238 pt.
-- Minimal design canvas: 110 × 110 pt, with an 84 pt primary quota ring centered on a transparent window.
+- Minimal design canvas: 110 × 110 pt, with an 84 pt primary quota ring centered on a transparent window and native circular glass behind the ring content.
 - Outer radius: 24 pt; content inset: 16 pt.
 - Keeps its information hierarchy in floating, desktop, and restored states.
 - Uses an opaque fallback for reduced transparency and sufficient contrast in light and dark appearances.
@@ -158,7 +158,7 @@ Settings remain a native macOS form rather than a miniature copy of the widget. 
 | Asset | Role | Rules |
 | --- | --- | --- |
 | `Resources/AppIcon.png` / `AppIcon.icns` | Installed application identity | Packaging, Finder, alerts, and About contexts; never shrink into the widget header |
-| `Sources/CodexMeterKit/Resources/CodexMeterMenuBarMark.png` | Transparent glyph master | Render in color at 20 pt in light appearance; use high-contrast template rendering in dark appearance and in the macOS menu bar |
+| `Sources/CodexMeterKit/Resources/CodexMeterMenuBarMark.png` | Transparent glyph master | Render in color at 20 pt in the widget; force a 10 pt intrinsic template-image size in the macOS menu bar so AppKit cannot expand the 64 px source |
 | `Sources/CodexMeterKit/Resources/CodexMeterMark.png` | Contained legacy mark | Use only where an intentional app-icon-like container is required; do not nest it inside glass or another rounded tile |
 
 Keep transparent bounds tight enough for optical alignment. Verify the menu-bar rendering independently because template tinting may remove the glyph's source colors.

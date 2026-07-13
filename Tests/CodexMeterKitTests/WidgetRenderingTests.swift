@@ -53,7 +53,7 @@ final class WidgetRenderingTests: XCTestCase {
     )
   }
 
-  func testMinimalWidgetRendersOnlyItsTransparentRingCanvas() async throws {
+  func testMinimalWidgetRendersItsGlassRingOnATransparentCanvas() async throws {
     let englishImage = try await renderWidget(
       language: .english,
       colorScheme: .light,
@@ -129,6 +129,11 @@ final class WidgetRenderingTests: XCTestCase {
     for corner in corners {
       XCTAssertLessThan(try XCTUnwrap(corner).alphaComponent, 0.05)
     }
+
+    let center = try XCTUnwrap(
+      bitmap.colorAt(x: bitmap.pixelsWide / 2, y: bitmap.pixelsHigh / 2)
+    )
+    XCTAssertGreaterThan(center.alphaComponent, 0.95)
 
     var visiblePixelCount = 0
     for y in 0..<bitmap.pixelsHigh {

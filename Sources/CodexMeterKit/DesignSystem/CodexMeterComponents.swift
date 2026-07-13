@@ -93,6 +93,35 @@ struct CodexMeterInsetSurface<Content: View>: View {
   }
 }
 
+struct CodexMeterCircularGlassBackdrop: View {
+  @Environment(\.accessibilityReduceTransparency) private var reduceTransparency
+  @Environment(\.codexMeterForceOpaqueSurface) private var forceOpaqueSurface
+  @Environment(\.colorSchemeContrast) private var colorSchemeContrast
+
+  var body: some View {
+    Group {
+      if reduceTransparency || forceOpaqueSurface {
+        Circle()
+          .fill(Color(nsColor: .windowBackgroundColor))
+      } else if #available(macOS 26.0, *) {
+        Circle()
+          .fill(.clear)
+          .glassEffect(.regular, in: .circle)
+      } else {
+        Circle()
+          .fill(.ultraThinMaterial)
+      }
+    }
+    .overlay {
+      Circle()
+        .strokeBorder(
+          Color.primary.opacity(colorSchemeContrast == .increased ? 0.20 : 0.08),
+          lineWidth: colorSchemeContrast == .increased ? 1 : 0.5
+        )
+    }
+  }
+}
+
 struct CodexMeterStatusPill: View {
   let title: String
   let signal: ConnectionSignal

@@ -61,25 +61,30 @@ public struct WidgetView: View {
   }
 
   private var minimalWidget: some View {
-    QuotaRing(window: store.snapshot?.primary)
-      .frame(
-        width: CodexMeterDesign.Metrics.minimalQuotaRing,
-        height: CodexMeterDesign.Metrics.minimalQuotaRing
-      )
-      .frame(
-        width: CodexMeterDesign.Metrics.minimalWidgetSize.width,
-        height: CodexMeterDesign.Metrics.minimalWidgetSize.height
-      )
-      .contentShape(Circle())
-      .help(localizer.string(.widgetMinimalHelp))
-      .contextMenu {
-        Button(localizer.string(.widgetRestoreFullView)) {
-          coordinator.setLayoutMode(.full)
-        }
-      }
-      .accessibilityAction(named: Text(localizer.string(.widgetRestoreFullView))) {
+    ZStack {
+      CodexMeterCircularGlassBackdrop()
+        .padding(CodexMeterDesign.Metrics.quotaStroke / 2)
+
+      QuotaRing(window: store.snapshot?.primary)
+    }
+    .frame(
+      width: CodexMeterDesign.Metrics.minimalQuotaRing,
+      height: CodexMeterDesign.Metrics.minimalQuotaRing
+    )
+    .frame(
+      width: CodexMeterDesign.Metrics.minimalWidgetSize.width,
+      height: CodexMeterDesign.Metrics.minimalWidgetSize.height
+    )
+    .contentShape(Circle())
+    .help(localizer.string(.widgetMinimalHelp))
+    .contextMenu {
+      Button(localizer.string(.widgetRestoreFullView)) {
         coordinator.setLayoutMode(.full)
       }
+    }
+    .accessibilityAction(named: Text(localizer.string(.widgetRestoreFullView))) {
+      coordinator.setLayoutMode(.full)
+    }
   }
 
   private var header: some View {

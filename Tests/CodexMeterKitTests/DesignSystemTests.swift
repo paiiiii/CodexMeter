@@ -97,6 +97,10 @@ final class DesignSystemTests: XCTestCase {
       CodexMeterDesign.Metrics.quotaRing,
       CodexMeterDesign.Metrics.brandGlyph
     )
+    XCTAssertLessThan(
+      CodexMeterDesign.Metrics.menuBarBrandGlyph,
+      CodexMeterDesign.Metrics.brandGlyph
+    )
     XCTAssertGreaterThan(
       CodexMeterDesign.Metrics.quotaRing,
       CodexMeterDesign.Metrics.controlHeight

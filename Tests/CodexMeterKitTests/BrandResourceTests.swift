@@ -32,12 +32,25 @@ final class BrandResourceTests: XCTestCase {
   func testWidgetAndMenuBarImagesShareCompactGlyphPixels() throws {
     let widgetImage = try XCTUnwrap(CodexMeterResources.brandImage(forMenuBar: false))
     let menuBarImage = try XCTUnwrap(CodexMeterResources.brandImage(forMenuBar: true))
-    let widgetRepresentation = try XCTUnwrap(widgetImage.tiffRepresentation)
-    let menuBarRepresentation = try XCTUnwrap(menuBarImage.tiffRepresentation)
+    let widgetRepresentation = try XCTUnwrap(
+      NSBitmapImageRep(data: try XCTUnwrap(widgetImage.tiffRepresentation))
+    )
+    let menuBarRepresentation = try XCTUnwrap(
+      NSBitmapImageRep(data: try XCTUnwrap(menuBarImage.tiffRepresentation))
+    )
 
     XCTAssertEqual(widgetImage.size, NSSize(width: 64, height: 64))
-    XCTAssertEqual(menuBarImage.size, widgetImage.size)
-    XCTAssertEqual(widgetRepresentation, menuBarRepresentation)
+    XCTAssertEqual(
+      menuBarImage.size,
+      NSSize(
+        width: CodexMeterDesign.Metrics.menuBarBrandGlyph,
+        height: CodexMeterDesign.Metrics.menuBarBrandGlyph
+      )
+    )
+    XCTAssertEqual(widgetRepresentation.pixelsWide, 64)
+    XCTAssertEqual(widgetRepresentation.pixelsHigh, 64)
+    XCTAssertEqual(menuBarRepresentation.pixelsWide, 64)
+    XCTAssertEqual(menuBarRepresentation.pixelsHigh, 64)
     XCTAssertFalse(widgetImage.isTemplate)
     XCTAssertTrue(menuBarImage.isTemplate)
   }

@@ -168,5 +168,5 @@ struct MenuBarBadge: View {
 }
 
 enum MenuBarBadgeMetrics {
-  static let brandMarkSize: CGFloat = 10
+  static let brandMarkSize = CodexMeterDesign.Metrics.menuBarBrandGlyph
 }

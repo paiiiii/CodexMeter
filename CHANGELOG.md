@@ -13,6 +13,8 @@ All notable changes to CodexMeter are documented in this file.
 
 - The widget window now resizes smoothly between 348 × 238 pt and 110 × 110 pt while preserving its top-right position and presentation mode.
 - Added layout persistence, window-geometry, localization, and Retina rendering coverage for the Minimal layout.
+- Added a circular native-glass backdrop inside the Minimal quota ring while keeping the surrounding window transparent.
+- Fixed the menu-bar template image's intrinsic point size so its 64 px source cannot expand to fill the status-bar height.
 
 ## [0.4.0] - 2026-07-12
 
