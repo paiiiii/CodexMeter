@@ -99,10 +99,12 @@ Animation must not resize a control or move a neighboring hit target. With Reduc
 
 ### Widget Surface
 
-- Fixed design canvas: 348 × 238 pt.
+- Full design canvas: 348 × 238 pt.
+- Minimal design canvas: 110 × 110 pt, with an 84 pt primary quota ring centered on a transparent window.
 - Outer radius: 24 pt; content inset: 16 pt.
 - Keeps its information hierarchy in floating, desktop, and restored states.
 - Uses an opaque fallback for reduced transparency and sufficient contrast in light and dark appearances.
+- Minimal layout removes the surface, header, token activity, secondary quota, and controls. The full layout can be restored from the ring context menu, menu bar, Settings, or its accessibility action.
 
 ### Brand Header
 

@@ -21,16 +21,25 @@ enum CodexMeterDesign {
 
   enum Metrics {
     static let widgetSize = CGSize(width: 348, height: 238)
+    static let minimalWidgetSize = CGSize(width: 110, height: 110)
     static let outerInset: CGFloat = 5
     static let contentInset: CGFloat = 16
     static let brandGlyph: CGFloat = 20
     static let quotaRing: CGFloat = 84
+    static let minimalQuotaRing: CGFloat = 84
     static let quotaStroke: CGFloat = 6
     static let controlHeight: CGFloat = 28
     static let iconControl: CGFloat = 28
     static let modeControlWidth: CGFloat = 68
     static let settingsControlWidth: CGFloat = 78
     static let statusDot: CGFloat = 6
+
+    static func widgetSize(for layoutMode: WidgetLayoutMode) -> CGSize {
+      switch layoutMode {
+      case .full: widgetSize
+      case .minimal: minimalWidgetSize
+      }
+    }
   }
 
   enum Typography {

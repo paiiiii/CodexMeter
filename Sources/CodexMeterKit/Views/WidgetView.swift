@@ -14,6 +14,25 @@ public struct WidgetView: View {
   }
 
   public var body: some View {
+    Group {
+      if contentPolicy.isMinimal {
+        minimalWidget
+          .transition(.scale(scale: 0.88).combined(with: .opacity))
+      } else {
+        fullWidget
+          .transition(.scale(scale: 0.96).combined(with: .opacity))
+      }
+    }
+    .animation(
+      CodexMeterDesign.Motion.smooth(
+        CodexMeterDesign.Motion.standard,
+        reduceMotion: reduceMotion
+      ),
+      value: coordinator.layoutMode
+    )
+  }
+
+  private var fullWidget: some View {
     CodexMeterSurface {
       ZStack {
         AmbientSignal()
@@ -39,6 +58,28 @@ public struct WidgetView: View {
     )
     .accessibilityElement(children: .contain)
     .accessibilityLabel(localizer.string(.widgetUsageAccessibility))
+  }
+
+  private var minimalWidget: some View {
+    QuotaRing(window: store.snapshot?.primary)
+      .frame(
+        width: CodexMeterDesign.Metrics.minimalQuotaRing,
+        height: CodexMeterDesign.Metrics.minimalQuotaRing
+      )
+      .frame(
+        width: CodexMeterDesign.Metrics.minimalWidgetSize.width,
+        height: CodexMeterDesign.Metrics.minimalWidgetSize.height
+      )
+      .contentShape(Circle())
+      .help(localizer.string(.widgetMinimalHelp))
+      .contextMenu {
+        Button(localizer.string(.widgetRestoreFullView)) {
+          coordinator.setLayoutMode(.full)
+        }
+      }
+      .accessibilityAction(named: Text(localizer.string(.widgetRestoreFullView))) {
+        coordinator.setLayoutMode(.full)
+      }
   }
 
   private var header: some View {
@@ -86,6 +127,27 @@ public struct WidgetView: View {
       .disabled(store.isRefreshing)
       .help(localizer.string(.commonRefreshNow))
       .accessibilityLabel(localizer.string(.widgetRefreshAccessibility))
+
+      Button {
+        coordinator.setLayoutMode(.minimal)
+      } label: {
+        Image(systemName: "arrow.down.right.and.arrow.up.left")
+          .font(.system(size: 10, weight: .semibold))
+          .frame(
+            width: CodexMeterDesign.Metrics.iconControl,
+            height: CodexMeterDesign.Metrics.iconControl
+          )
+          .contentShape(
+            RoundedRectangle(
+              cornerRadius: CodexMeterDesign.Radius.control,
+              style: .continuous
+            )
+          )
+          .codexMeterControlBackground()
+      }
+      .buttonStyle(.plain)
+      .help(localizer.string(.widgetUseMinimalView))
+      .accessibilityLabel(localizer.string(.widgetUseMinimalView))
     }
     .frame(height: CodexMeterDesign.Metrics.controlHeight)
   }
@@ -205,6 +267,10 @@ public struct WidgetView: View {
 
   private var localizer: AppLocalizer {
     languageController.localizer
+  }
+
+  private var contentPolicy: WidgetContentPolicy {
+    WidgetContentPolicy.policy(for: coordinator.layoutMode)
   }
 }
 

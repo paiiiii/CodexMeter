@@ -8,18 +8,48 @@ private final class CodexMeterPanel: NSPanel {
   override var canBecomeMain: Bool { false }
 }
 
+struct WidgetWindowGeometry {
+  static func size(for layoutMode: WidgetLayoutMode) -> NSSize {
+    CodexMeterDesign.Metrics.widgetSize(for: layoutMode)
+  }
+
+  static func frameAnchoredTopRight(
+    from currentFrame: NSRect,
+    targetSize: NSSize
+  ) -> NSRect {
+    NSRect(
+      x: currentFrame.maxX - targetSize.width,
+      y: currentFrame.maxY - targetSize.height,
+      width: targetSize.width,
+      height: targetSize.height
+    )
+  }
+
+  static func clampedFrame(
+    _ frame: NSRect,
+    to visibleFrame: NSRect,
+    inset: CGFloat = 10
+  ) -> NSRect {
+    let bounds = visibleFrame.insetBy(dx: inset, dy: inset)
+    var origin = frame.origin
+    origin.x = min(max(origin.x, bounds.minX), bounds.maxX - frame.width)
+    origin.y = min(max(origin.y, bounds.minY), bounds.maxY - frame.height)
+    return NSRect(origin: origin, size: frame.size)
+  }
+}
+
 @MainActor
 @Observable
 public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   public private(set) var mode: WidgetPresentationMode
+  public private(set) var layoutMode: WidgetLayoutMode
 
   private enum Keys {
     static let mode = "CodexMeter.presentationMode"
     static let lastVisibleMode = "CodexMeter.lastVisibleMode"
+    static let layoutMode = "CodexMeter.layoutMode"
     static let frameName = NSWindow.FrameAutosaveName("CodexMeter.widgetFrame")
   }
-
-  private static let widgetSize = CodexMeterDesign.Metrics.widgetSize
 
   private let store: UsageStore
   private let languageController: LanguageController
@@ -45,6 +75,10 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
       .flatMap(WidgetPresentationMode.init(rawValue:)) ?? .floating
     mode = savedMode
 
+    layoutMode =
+      defaults.string(forKey: Keys.layoutMode)
+      .flatMap(WidgetLayoutMode.init(rawValue:)) ?? .full
+
     let savedVisibleMode = defaults.string(forKey: Keys.lastVisibleMode)
       .flatMap(WidgetPresentationMode.init(rawValue:))
     lastVisibleMode = savedVisibleMode == .desktop ? .desktop : .floating
@@ -65,7 +99,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
 
   public func setMode(_ newMode: WidgetPresentationMode) {
     guard mode != newMode else {
-      if newMode != .hidden, !panel.isVisible {
+      if hasStarted, newMode != .hidden, !panel.isVisible {
         apply(newMode, animated: true)
       }
       return
@@ -77,7 +111,24 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
       lastVisibleMode = newMode
       defaults.set(newMode.rawValue, forKey: Keys.lastVisibleMode)
     }
+    guard hasStarted else { return }
     apply(newMode, animated: true)
+  }
+
+  public func setLayoutMode(_ newLayoutMode: WidgetLayoutMode) {
+    guard layoutMode != newLayoutMode else { return }
+    layoutMode = newLayoutMode
+    defaults.set(newLayoutMode.rawValue, forKey: Keys.layoutMode)
+    guard hasStarted else { return }
+    resizePanel(animated: true)
+  }
+
+  public func toggleLayoutMode() {
+    setLayoutMode(layoutMode == .minimal ? .full : .minimal)
+  }
+
+  var widgetSize: NSSize {
+    WidgetWindowGeometry.size(for: layoutMode)
   }
 
   public func showLastVisibleMode() {
@@ -105,8 +156,9 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   }
 
   private func makePanel() -> CodexMeterPanel {
+    let initialSize = widgetSize
     let panel = CodexMeterPanel(
-      contentRect: NSRect(origin: .zero, size: Self.widgetSize),
+      contentRect: NSRect(origin: .zero, size: initialSize),
       styleMask: [.borderless, .nonactivatingPanel],
       backing: .buffered,
       defer: false
@@ -125,13 +177,21 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     panel.animationBehavior = .none
     panel.contentView = NSHostingView(
       rootView: WidgetView(store: store, coordinator: self)
-        .frame(width: Self.widgetSize.width, height: Self.widgetSize.height)
         .codexMeterLanguage(languageController)
     )
     panel.contentView?.wantsLayer = true
     panel.contentView?.layer?.backgroundColor = .clear
 
     let restored = panel.setFrameUsingName(Keys.frameName)
+    if restored {
+      panel.setFrame(
+        WidgetWindowGeometry.frameAnchoredTopRight(
+          from: panel.frame,
+          targetSize: initialSize
+        ),
+        display: false
+      )
+    }
     panel.setFrameAutosaveName(Keys.frameName)
     if !restored {
       positionAtTopRight(panel)
@@ -172,6 +232,13 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     panel.collectionBehavior = policy.collectionBehavior
     panel.isFloatingPanel = policy.isFloatingPanel
     panel.hasShadow = policy.hasShadow
+    panel.setFrame(
+      WidgetWindowGeometry.frameAnchoredTopRight(
+        from: panel.frame,
+        targetSize: widgetSize
+      ),
+      display: true
+    )
     clampToVisibleScreen(panel)
 
     panel.alphaValue = shouldAnimate ? 0 : 1
@@ -185,11 +252,30 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     }
   }
 
+  private func resizePanel(animated: Bool) {
+    let targetFrame = WidgetWindowGeometry.frameAnchoredTopRight(
+      from: panel.frame,
+      targetSize: widgetSize
+    )
+    let screen =
+      panel.screen
+      ?? NSScreen.screens.first(where: { $0.frame.intersects(panel.frame) })
+      ?? NSScreen.main
+    let clampedFrame = screen.map {
+      WidgetWindowGeometry.clampedFrame(targetFrame, to: $0.visibleFrame)
+    } ?? targetFrame
+    let shouldAnimate =
+      animated
+      && panel.isVisible
+      && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
+    panel.setFrame(clampedFrame, display: true, animate: shouldAnimate)
+  }
+
   private func positionAtTopRight(_ panel: NSWindow) {
     guard let visibleFrame = NSScreen.main?.visibleFrame else { return }
     let origin = NSPoint(
-      x: visibleFrame.maxX - Self.widgetSize.width - 24,
-      y: visibleFrame.maxY - Self.widgetSize.height - 24
+      x: visibleFrame.maxX - panel.frame.width - 24,
+      y: visibleFrame.maxY - panel.frame.height - 24
     )
     panel.setFrameOrigin(origin)
   }
@@ -201,11 +287,10 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
       ?? NSScreen.main
     guard let visibleFrame = screen?.visibleFrame else { return }
 
-    let insetFrame = visibleFrame.insetBy(dx: 10, dy: 10)
-    var origin = panel.frame.origin
-    origin.x = min(max(origin.x, insetFrame.minX), insetFrame.maxX - panel.frame.width)
-    origin.y = min(max(origin.y, insetFrame.minY), insetFrame.maxY - panel.frame.height)
-    panel.setFrameOrigin(origin)
+    panel.setFrame(
+      WidgetWindowGeometry.clampedFrame(panel.frame, to: visibleFrame),
+      display: false
+    )
   }
 
   @objc private func screenConfigurationDidChange() {

@@ -14,8 +14,14 @@
 "mode.desktop.compact" = "Desktop";
 "mode.hidden.compact" = "Hide";
 
+"layout.full" = "Full";
+"layout.minimal" = "Minimal";
+"layout.full.description" = "Shows quotas, token activity, status, and controls.";
+"layout.minimal.description" = "Shows only the primary quota ring and its center value.";
+
 "settings.display.section" = "Display";
 "settings.widget_mode" = "Widget Mode";
+"settings.widget_layout" = "Widget Layout";
 "settings.sync.section" = "Sync";
 "settings.refresh_interval" = "Refresh Interval";
 "interval.15_seconds" = "15 seconds";
@@ -42,6 +48,8 @@
 "menu.show_widget" = "Show Widget";
 "menu.switch_always_on_top" = "Switch to Always on Top";
 "menu.bring_forward" = "Bring Widget Forward";
+"menu.use_minimal_layout" = "Use Minimal View";
+"menu.use_full_layout" = "Restore Full View";
 "menu.refresh_failed_cached" = "Refresh failed · Showing last data";
 "menu.synced_format" = "Synced · %@";
 "menu.quit" = "Quit CodexMeter";
@@ -60,6 +68,9 @@
 "widget.waiting_for_codex_data" = "Waiting for Codex data";
 "widget.today_unavailable" = "Today's tokens unavailable";
 "widget.open_settings" = "Open Settings";
+"widget.use_minimal_view" = "Minimize Widget";
+"widget.restore_full_view" = "Restore Full Widget";
+"widget.minimal_help" = "Right-click or use the menu bar to restore the full widget.";
 "widget.status.syncing" = "Syncing";
 "widget.status.cached" = "Cached";
 "widget.status.offline" = "Offline";

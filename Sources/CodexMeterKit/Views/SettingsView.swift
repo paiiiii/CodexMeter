@@ -40,6 +40,21 @@ public struct SettingsView: View {
         Text(modeDescription)
           .font(.caption)
           .foregroundStyle(.secondary)
+
+        Picker(localizer.string(.settingsWidgetLayout), selection: layoutBinding) {
+          ForEach(WidgetLayoutMode.allCases) { layoutMode in
+            Label(
+              layoutMode.localizedTitle(using: localizer),
+              systemImage: layoutMode.systemImage
+            )
+            .tag(layoutMode)
+          }
+        }
+        .pickerStyle(.segmented)
+
+        Text(layoutDescription)
+          .font(.caption)
+          .foregroundStyle(.secondary)
       }
 
       Section(localizer.string(.settingsSyncSection)) {
@@ -147,8 +162,8 @@ public struct SettingsView: View {
     .frame(
       minWidth: 500,
       idealWidth: 520,
-      minHeight: 520,
-      idealHeight: 560
+      minHeight: 580,
+      idealHeight: 620
     )
     .onAppear {
       loginItemController.refresh()
@@ -191,6 +206,13 @@ public struct SettingsView: View {
     )
   }
 
+  private var layoutBinding: Binding<WidgetLayoutMode> {
+    Binding(
+      get: { coordinator.layoutMode },
+      set: { coordinator.setLayoutMode($0) }
+    )
+  }
+
   private var refreshIntervalBinding: Binding<TimeInterval> {
     Binding(
       get: { store.refreshInterval },
@@ -214,5 +236,9 @@ public struct SettingsView: View {
     case .hidden:
       localizer.string(.modeHiddenDescription)
     }
+  }
+
+  private var layoutDescription: String {
+    coordinator.layoutMode.localizedDescription(using: localizer)
   }
 }

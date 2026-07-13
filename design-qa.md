@@ -1,37 +1,44 @@
-# CodexMeter Status Bar Logo Size QA
+# CodexMeter Minimal Widget QA
 
-- Source visual truth: user-provided status-bar crop archived in `QA/menu-bar-badge-small-comparison.png`
-- Implementation screenshot: `QA/menu-bar-badge-small.png`
-- Viewport: source status-bar crop 152x145 px; production badge rendered at native 2x scale as 83x44 px
-- State: normal account state with `5%` remaining; macOS light/tinted menu bar appearance
-- Full-view comparison evidence: `QA/menu-bar-badge-small-comparison.png`
-- Focused region comparison: the full target is already a focused status-bar component, so no smaller crop was needed
+- Source visual truth: `/Users/paiii/Desktop/Screenshot 2026-07-12 at 8.51.54 PM.png`
+- Rendered implementation: `QA/minimal-mode/widget-minimal-en-light.png`
+- White-composited implementation: `QA/minimal-mode/widget-minimal-en-light-on-white.png`
+- Installed runtime capture: `QA/minimal-mode/widget-minimal-runtime.png` (transparent) and `QA/minimal-mode/widget-minimal-runtime-on-white.png` (comparison composite)
+- Source viewport: 218 × 214 px
+- Implementation viewport: 220 × 220 px (110 × 110 pt at 2× Retina scale)
+- State: English, light appearance, 95% remaining in the primary rate-limit window
+- Combined comparison evidence: `QA/minimal-mode/minimal-ring-comparison.png`
+- Focused comparison: the supplied source is already a focused crop of the ring component, so the combined full comparison is also the focused comparison
 
 ## Findings
 
-No actionable P0, P1, or P2 differences remain for the requested status-bar logo size change.
+No actionable P0, P1, or P2 visual differences remain.
 
-- Fonts and typography: the system menu-bar font, `5%` content, monospaced digits, baseline, weight, and antialiasing are unchanged.
-- Spacing and layout rhythm: the menu-bar mark now uses a 10 pt footprint instead of 14 pt, so it sits within the text height and no longer touches the top or bottom of the status bar.
-- Colors and visual tokens: the mark still renders as a native template image, so it follows light, dark, tinted, and highlighted menu-bar foreground colors.
-- Image quality and asset fidelity: the dedicated transparent 64x64 C-ring asset is unchanged; only its rendered status-bar footprint was reduced.
-- Copy and content: the percentage and error-state text are unchanged. The warning triangle remains reserved for refresh errors.
+- Geometry: the final 84 pt ring matches the reference diameter and stays centered in a compact 110 pt transparent canvas.
+- Content hierarchy: only the circular progress indicator, percentage, and window label remain. Header, token activity, secondary quota, and controls are absent.
+- Typography: percentage and uppercase window label preserve the existing Signal & Silence component's type roles and alignment.
+- Color: the implementation keeps CodexMeter's semantic mint signal token and quiet translucent track.
+- Background: the production minimal window is transparent. The white composite exists only to make comparison against the supplied light screenshot legible.
+- Dynamic data: the deterministic test snapshot uses a five-hour fixture, while the installed app's runtime capture correctly shows the current `7D WINDOW` primary quota. Labels continue to follow the service-provided window duration.
 
 ## Comparison History
 
-1. Initial evidence showed the C-ring status-bar logo rendering too large next to `5%`, with the mark visually crowding the menu-bar height.
-2. The production `MenuBarBadge` mark frame was reduced from 14 pt to a shared 10 pt metric.
-3. A focused render test now locks the menu-bar mark to a 10 pt / 20 px Retina footprint, and the final comparison shows the icon proportion aligned with the percentage text.
+1. The first implementation used a 90 pt ring and appeared visibly oversized relative to the supplied crop (P2).
+2. The minimal ring was changed to the shared 84 pt primary-quota token.
+3. The Retina snapshot and combined comparison were regenerated. Ring diameter, center alignment, label baseline, and surrounding breathing room now match the reference without changing the full widget's established component styling.
 
 ## Interaction and Runtime Checks
 
-- The production `MenuBarBadge` rendered successfully at native 2x status-bar scale.
-- At the time of this logo QA, the full Swift test suite passed: 20 tests executed, 1 live integration test skipped by default, 0 failures.
-- The Release app was rebuilt, ad-hoc signed, installed at `~/Applications/CodexMeter.app`, and relaunched.
-- This is a native macOS component; browser and browser-console checks are not applicable.
+- Full and Minimal layouts are independent from Always on Top, Desktop, and Hidden presentation modes.
+- The full widget can be restored from the ring context menu, menu-bar menu, Settings, or an accessibility custom action.
+- Window resizing preserves the top-right anchor and clamps the result to the visible screen.
+- Reduce Motion switches layouts without animated resizing.
+- English light and Simplified Chinese dark minimal snapshots render at exactly 220 × 220 px with transparent corners.
+- The installed panel was measured through Core Graphics at exactly 110 × 110 pt and captured with its live `7D WINDOW` content.
+- Browser and browser-console checks are not applicable to this native macOS implementation.
 
 ## Follow-up Polish
 
-- P3: capture an additional real menu-bar screenshot after any future system tint or dark-mode change.
+- P3: capture additional real-window evidence on a multi-display Mac after future window-positioning changes.
 
 final result: passed

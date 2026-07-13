@@ -14,8 +14,14 @@
 "mode.desktop.compact" = "桌面";
 "mode.hidden.compact" = "隐藏";
 
+"layout.full" = "完整";
+"layout.minimal" = "最小化";
+"layout.full.description" = "显示额度、Token 用量、连接状态和控制项。";
+"layout.minimal.description" = "只显示主要额度圆环和中央数值。";
+
 "settings.display.section" = "显示";
 "settings.widget_mode" = "小组件模式";
+"settings.widget_layout" = "小组件布局";
 "settings.sync.section" = "同步";
 "settings.refresh_interval" = "刷新频率";
 "interval.15_seconds" = "15 秒";
@@ -42,6 +48,8 @@
 "menu.show_widget" = "显示小组件";
 "menu.switch_always_on_top" = "切换到始终置顶";
 "menu.bring_forward" = "将小组件置于前方";
+"menu.use_minimal_layout" = "使用最小化视图";
+"menu.use_full_layout" = "恢复完整视图";
 "menu.refresh_failed_cached" = "刷新失败 · 正在显示上次数据";
 "menu.synced_format" = "已同步 · %@";
 "menu.quit" = "退出 CodexMeter";
@@ -60,6 +68,9 @@
 "widget.waiting_for_codex_data" = "等待 Codex 数据";
 "widget.today_unavailable" = "今日 Token 暂不可用";
 "widget.open_settings" = "打开设置";
+"widget.use_minimal_view" = "最小化小组件";
+"widget.restore_full_view" = "恢复完整小组件";
+"widget.minimal_help" = "右键单击圆环或使用菜单栏恢复完整小组件。";
 "widget.status.syncing" = "同步中";
 "widget.status.cached" = "缓存";
 "widget.status.offline" = "离线";

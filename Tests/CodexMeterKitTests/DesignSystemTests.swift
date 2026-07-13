@@ -102,6 +102,14 @@ final class DesignSystemTests: XCTestCase {
       CodexMeterDesign.Metrics.controlHeight
     )
     XCTAssertEqual(
+      CodexMeterDesign.Metrics.minimalWidgetSize,
+      CGSize(width: 110, height: 110)
+    )
+    XCTAssertEqual(
+      CodexMeterDesign.Metrics.minimalQuotaRing,
+      CodexMeterDesign.Metrics.quotaRing
+    )
+    XCTAssertEqual(
       CodexMeterDesign.Metrics.iconControl,
       CodexMeterDesign.Metrics.controlHeight
     )

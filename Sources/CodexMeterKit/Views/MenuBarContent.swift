@@ -37,6 +37,19 @@ public struct MenuBarContent: View {
     Divider()
 
     Button {
+      coordinator.toggleLayoutMode()
+    } label: {
+      Label(
+        localizer.string(
+          coordinator.layoutMode == .minimal ? .menuUseFullLayout : .menuUseMinimalLayout
+        ),
+        systemImage: coordinator.layoutMode == .minimal ? "rectangle" : "circle"
+      )
+    }
+
+    Divider()
+
+    Button {
       Task { await store.refresh() }
     } label: {
       Label(

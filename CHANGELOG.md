@@ -4,6 +4,16 @@ All notable changes to CodexMeter are documented in this file.
 
 ## [Unreleased]
 
+### Added
+
+- An independent Minimal widget layout that keeps only the primary quota ring and its center content.
+- Restore controls for the full layout in the widget context menu, menu bar, Settings, and accessibility actions.
+
+### Changed
+
+- The widget window now resizes smoothly between 348 × 238 pt and 110 × 110 pt while preserving its top-right position and presentation mode.
+- Added layout persistence, window-geometry, localization, and Retina rendering coverage for the Minimal layout.
+
 ## [0.4.0] - 2026-07-12
 
 ### Added

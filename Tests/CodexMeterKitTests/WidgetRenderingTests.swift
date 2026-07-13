@@ -19,10 +19,15 @@ private actor DesignSnapshotProvider: UsageProviding {
 @MainActor
 final class WidgetRenderingTests: XCTestCase {
   func testOpaqueWidgetRendersAtItsTokenizedCanvasSize() async throws {
-    let englishImage = try await renderWidget(language: .english, colorScheme: .light)
+    let englishImage = try await renderWidget(
+      language: .english,
+      colorScheme: .light,
+      layoutMode: .full
+    )
     let chineseImage = try await renderWidget(
       language: .simplifiedChinese,
-      colorScheme: .dark
+      colorScheme: .dark,
+      layoutMode: .full
     )
 
     try assertCanvas(englishImage)
@@ -48,6 +53,45 @@ final class WidgetRenderingTests: XCTestCase {
     )
   }
 
+  func testMinimalWidgetRendersOnlyItsTransparentRingCanvas() async throws {
+    let englishImage = try await renderWidget(
+      language: .english,
+      colorScheme: .light,
+      layoutMode: .minimal,
+      primaryUsedPercent: 5
+    )
+    let chineseImage = try await renderWidget(
+      language: .simplifiedChinese,
+      colorScheme: .dark,
+      layoutMode: .minimal,
+      primaryUsedPercent: 5
+    )
+
+    try assertMinimalCanvas(englishImage)
+    try assertMinimalCanvas(chineseImage)
+
+    guard
+      let directory = ProcessInfo.processInfo.environment[
+        "CODEX_METER_WIDGET_SNAPSHOT_DIR"
+      ]
+    else { return }
+
+    try FileManager.default.createDirectory(
+      atPath: directory,
+      withIntermediateDirectories: true
+    )
+    try writePNG(
+      englishImage,
+      to: URL(fileURLWithPath: directory)
+        .appendingPathComponent("widget-minimal-en-light.png")
+    )
+    try writePNG(
+      chineseImage,
+      to: URL(fileURLWithPath: directory)
+        .appendingPathComponent("widget-minimal-zh-dark.png")
+    )
+  }
+
   private func assertCanvas(_ image: CGImage) throws {
     XCTAssertEqual(
       image.width,
@@ -65,6 +109,37 @@ final class WidgetRenderingTests: XCTestCase {
     XCTAssertGreaterThan(center.alphaComponent, 0.95)
   }
 
+  private func assertMinimalCanvas(_ image: CGImage) throws {
+    XCTAssertEqual(
+      image.width,
+      Int(CodexMeterDesign.Metrics.minimalWidgetSize.width * 2)
+    )
+    XCTAssertEqual(
+      image.height,
+      Int(CodexMeterDesign.Metrics.minimalWidgetSize.height * 2)
+    )
+
+    let bitmap = try XCTUnwrap(NSBitmapImageRep(cgImage: image))
+    let corners = [
+      bitmap.colorAt(x: 0, y: 0),
+      bitmap.colorAt(x: bitmap.pixelsWide - 1, y: 0),
+      bitmap.colorAt(x: 0, y: bitmap.pixelsHigh - 1),
+      bitmap.colorAt(x: bitmap.pixelsWide - 1, y: bitmap.pixelsHigh - 1),
+    ]
+    for corner in corners {
+      XCTAssertLessThan(try XCTUnwrap(corner).alphaComponent, 0.05)
+    }
+
+    var visiblePixelCount = 0
+    for y in 0..<bitmap.pixelsHigh {
+      for x in 0..<bitmap.pixelsWide
+      where (bitmap.colorAt(x: x, y: y)?.alphaComponent ?? 0) > 0.1 {
+        visiblePixelCount += 1
+      }
+    }
+    XCTAssertGreaterThan(visiblePixelCount, 2_000)
+  }
+
   private func writePNG(_ image: CGImage, to url: URL) throws {
     let representation = NSBitmapImageRep(cgImage: image)
     let data = try XCTUnwrap(representation.representation(using: .png, properties: [:]))
@@ -73,7 +148,9 @@ final class WidgetRenderingTests: XCTestCase {
 
   private func renderWidget(
     language: AppLanguage,
-    colorScheme: ColorScheme
+    colorScheme: ColorScheme,
+    layoutMode: WidgetLayoutMode,
+    primaryUsedPercent: Int = 45
   ) async throws -> CGImage {
     let suiteName = "CodexMeterTests.Rendering.\(UUID().uuidString)"
     let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
@@ -93,7 +170,7 @@ final class WidgetRenderingTests: XCTestCase {
         fetchedAt: now,
         planType: "plus",
         primary: QuotaWindow(
-          usedPercent: 45,
+          usedPercent: primaryUsedPercent,
           windowDurationMinutes: 300,
           resetsAt: now.addingTimeInterval(4 * 3_600 + 17 * 60)
         ),
@@ -117,11 +194,14 @@ final class WidgetRenderingTests: XCTestCase {
       languageController: languageController,
       defaults: defaults
     )
+    coordinator.setLayoutMode(layoutMode)
+
+    let widgetSize = CodexMeterDesign.Metrics.widgetSize(for: layoutMode)
 
     let view = WidgetView(store: store, coordinator: coordinator)
       .frame(
-        width: CodexMeterDesign.Metrics.widgetSize.width,
-        height: CodexMeterDesign.Metrics.widgetSize.height
+        width: widgetSize.width,
+        height: widgetSize.height
       )
       .codexMeterLanguage(languageController)
       .environment(\.colorScheme, colorScheme)
