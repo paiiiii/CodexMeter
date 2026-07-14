@@ -92,9 +92,8 @@ All transitions share the standard `0.22, 1, 0.36, 1` curve.
 | `layoutMorph` | 0.38 s | Full-panel contraction into the primary quota ring and reverse expansion |
 | `data` | 0.42 s | Quota and metric value transition |
 | `refresh` | 0.85 s | One refresh rotation |
-| `pulse` | 1.8 s | Low-frequency live/syncing pulse when it conveys activity |
 
-Animation must not resize a control or move a neighboring hit target. With Reduce Motion enabled, transitions become immediate and continuous rotation or pulsing stops.
+Animation must not resize a control or move a neighboring hit target. Persistent decorative animation is not permitted: the settled widget must reach an idle render state. With Reduce Motion enabled, transitions become immediate and bounded rotation is disabled.
 
 ## Components
 

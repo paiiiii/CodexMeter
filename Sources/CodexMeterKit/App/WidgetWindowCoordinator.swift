@@ -179,6 +179,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   public private(set) var mode: WidgetPresentationMode
   public private(set) var layoutMode: WidgetLayoutMode
   public private(set) var isLayoutTransitioning = false
+  public private(set) var isWidgetPresented: Bool
 
   private enum Keys {
     static let mode = "CodexMeter.presentationMode"
@@ -211,6 +212,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
       defaults.string(forKey: Keys.mode)
       .flatMap(WidgetPresentationMode.init(rawValue:)) ?? .floating
     mode = savedMode
+    isWidgetPresented = savedMode != .hidden
 
     layoutMode =
       defaults.string(forKey: Keys.layoutMode)
@@ -309,7 +311,6 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     panel.hidesOnDeactivate = false
     panel.becomesKeyOnlyIfNeeded = true
     panel.isMovableByWindowBackground = true
-    panel.acceptsMouseMovedEvents = true
     panel.tabbingMode = .disallowed
     panel.animationBehavior = .none
     panel.contentView = NSHostingView(
@@ -350,6 +351,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
       guard shouldAnimate, panel.isVisible else {
         panel.orderOut(nil)
         panel.alphaValue = 1
+        isWidgetPresented = false
         return
       }
       NSAnimationContext.runAnimationGroup { context in
@@ -361,11 +363,13 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
           guard let self, self.transitionID == currentTransitionID else { return }
           self.panel.orderOut(nil)
           self.panel.alphaValue = 1
+          self.isWidgetPresented = false
         }
       }
       return
     }
 
+    isWidgetPresented = true
     panel.orderOut(nil)
     panel.level = policy.level
     panel.collectionBehavior = policy.collectionBehavior

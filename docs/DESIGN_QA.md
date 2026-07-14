@@ -20,6 +20,7 @@ The automated suite should cover:
 - format-placeholder parity between localizations;
 - accessibility labels for icon-only controls and metric summaries;
 - state mapping for Connecting, Syncing, Live, Cached, and Offline.
+- settled Full, Minimal, Desktop, and Hidden states contain no perpetual animation or continuously invalidated invisible subtree.
 
 An image-rendering smoke test may catch crashes or missing resources, but it cannot prove material contrast, correct window levels, text legibility, or crop safety.
 
@@ -40,6 +41,8 @@ Record evidence for every row affected by a change:
 | 2× display scale / zoom | ✓ | ✓ | ✓ | Sharp assets, no clipping, stable layout |
 | English | ✓ | ✓ | ✓ | Copy, number/date formatting, truncation |
 | Simplified Chinese | ✓ | ✓ | ✓ | Copy, number/date formatting, truncation |
+
+For energy-sensitive changes, profile a Release build after data has settled. Sample both Full and Minimal layouts for at least ten seconds; sustained idle CPU should remain near zero, and the local `codex app-server` should be sleeping between refreshes.
 
 Test the menu-bar glyph on both light and dark menu-bar backgrounds and with system accent changes. Screen Recording permission may be required to collect reliable menu-bar and Spaces evidence.
 

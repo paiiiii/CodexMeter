@@ -46,9 +46,27 @@ No actionable P0, P1, or P2 differences remain.
 - The quota center remains invariant in pure-geometry tests, including the reverse transformation.
 - Controls and dragging are disabled only during the 0.38 s morph and restored on completion.
 - System-window shadow policy is covered for settled floating Full, Minimal, transition, and Desktop states.
-- The full Swift suite passes: 46 tests, 0 failures, with one opt-in live account test skipped by default.
+- The full Swift suite passes: 50 tests, 0 failures, with one opt-in live account test skipped by default.
 - Release signing, packaged resources, localization plists, design tokens, and whitespace validation pass.
 - Browser and browser-console checks are not applicable to this native macOS implementation.
+
+## Energy Regression QA — 2026-07-14
+
+The installed Release build was sampled after account data settled, using the same Minimal + floating state reported in Activity Monitor.
+
+| Settled state | Before | After |
+| --- | ---: | ---: |
+| Minimal CPU, 1 s samples | 96.5–99.4% | 0.0% across 10 samples |
+| Minimal physical footprint | 92.2 MB | 24.8 MB |
+| Full CPU, 1 s samples | not separately captured | 0.0% across 10 samples |
+| Hidden CPU, 1 s samples | not separately captured | 0.0% across 5 samples |
+
+- Before the fix, the main thread continuously executed `NSHostingView.layout → AnimatableAttribute → RepeatAnimation`; the local Codex app-server remained at 0.0% CPU.
+- After the fix, 4,386 of 4,387 final Minimal-mode main-thread samples were blocked waiting for the next event. No `RepeatAnimation` remained.
+- A final installed-build window that crossed a scheduled refresh returned immediately to idle: seven of ten one-second samples were at or below 0.1% CPU, with only three bounded refresh samples (0.8%, 1.6%, and 15.9%).
+- A scheduled refresh observed during the Full-mode sample performed bounded layout work and returned to sleep; it did not restart continuous rendering.
+- `powermetrics` hardware wattage was unavailable without elevated privileges, so CPU, process power, physical footprint, and symbolicated sampling are the comparison metrics.
+- The original Minimal + floating preference was restored after Full and Hidden verification.
 
 ## Follow-up Polish
 

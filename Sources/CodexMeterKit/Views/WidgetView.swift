@@ -26,22 +26,27 @@ public struct WidgetView: View {
           showsSoftShadow: coordinator.mode == .floating
         )
 
-        fullContent
-          .frame(
-            width: CodexMeterDesign.Metrics.widgetSize.width,
-            height: CodexMeterDesign.Metrics.widgetSize.height,
-            alignment: .topLeading
-          )
-          .scaleEffect(
-            0.72 + 0.28 * progress,
-            anchor: fullQuotaAnchor
-          )
-          .opacity(fullContentOpacity(progress: progress))
-          .mask(WidgetMorphShape(progress: progress))
-          .allowsHitTesting(
-            progress > 0.995 && !coordinator.isLayoutTransitioning
-          )
-          .accessibilityHidden(progress < 0.995)
+        if contentPolicy.shouldMountFullContent(
+          isLayoutTransitioning: coordinator.isLayoutTransitioning,
+          isWidgetPresented: coordinator.isWidgetPresented
+        ) {
+          fullContent
+            .frame(
+              width: CodexMeterDesign.Metrics.widgetSize.width,
+              height: CodexMeterDesign.Metrics.widgetSize.height,
+              alignment: .topLeading
+            )
+            .scaleEffect(
+              0.72 + 0.28 * progress,
+              anchor: fullQuotaAnchor
+            )
+            .opacity(fullContentOpacity(progress: progress))
+            .mask(WidgetMorphShape(progress: progress))
+            .allowsHitTesting(
+              progress > 0.995 && !coordinator.isLayoutTransitioning
+            )
+            .accessibilityHidden(progress < 0.995)
+        }
 
         QuotaRing(window: store.snapshot?.primary)
           .frame(
@@ -95,6 +100,10 @@ public struct WidgetView: View {
     )
     .accessibilityElement(children: .contain)
     .accessibilityLabel(localizer.string(.widgetUsageAccessibility))
+  }
+
+  private var contentPolicy: WidgetContentPolicy {
+    WidgetContentPolicy.policy(for: coordinator.layoutMode)
   }
 
   private var minimalInteractionLayer: some View {
@@ -157,8 +166,7 @@ public struct WidgetView: View {
           .animation(
             store.isRefreshing && !reduceMotion
               ? .linear(duration: CodexMeterDesign.Motion.refresh)
-                .repeatForever(autoreverses: false)
-              : .default,
+              : nil,
             value: store.isRefreshing
           )
           .frame(
@@ -269,7 +277,7 @@ public struct WidgetView: View {
         CodexMeterDesign.Motion.data,
         reduceMotion: reduceMotion
       ),
-      value: store.snapshot
+      value: store.snapshot?.todayTokens
     )
   }
 
@@ -551,17 +559,27 @@ private struct ResetCountdownView: View {
   @Environment(LanguageController.self) private var languageController
 
   var body: some View {
-    TimelineView(.periodic(from: .now, by: 60)) { context in
-      Text(
-        MetricFormatter.compactResetCountdown(
-          until: date,
-          now: context.date,
-          localizer: languageController.localizer
-        )
-      )
-      .font(CodexMeterDesign.Typography.metadata)
-      .monospacedDigit()
+    Group {
+      if let date {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+          label(date: date, now: context.date)
+        }
+      } else {
+        label(date: nil, now: .now)
+      }
     }
+  }
+
+  private func label(date: Date?, now: Date) -> some View {
+    Text(
+      MetricFormatter.compactResetCountdown(
+        until: date,
+        now: now,
+        localizer: languageController.localizer
+      )
+    )
+    .font(CodexMeterDesign.Typography.metadata)
+    .monospacedDigit()
   }
 }
 
@@ -571,24 +589,34 @@ private struct PrimaryResetCountdown: View {
   @Environment(LanguageController.self) private var languageController
 
   var body: some View {
-    TimelineView(.periodic(from: .now, by: 60)) { context in
-      HStack(spacing: CodexMeterDesign.Spacing.compact) {
-        Image(systemName: "clock")
-          .font(.system(size: 9, weight: .semibold))
-        Text(
-          MetricFormatter.resetCountdown(
-            until: date,
-            now: context.date,
-            localizer: localizer
-          )
-        )
-        .font(CodexMeterDesign.Typography.metadata)
-        .monospacedDigit()
-        .lineLimit(1)
+    Group {
+      if let date {
+        TimelineView(.periodic(from: .now, by: 60)) { context in
+          label(date: date, now: context.date)
+        }
+      } else {
+        label(date: nil, now: .now)
       }
-      .foregroundStyle(.secondary)
-      .accessibilityElement(children: .combine)
     }
+  }
+
+  private func label(date: Date?, now: Date) -> some View {
+    HStack(spacing: CodexMeterDesign.Spacing.compact) {
+      Image(systemName: "clock")
+        .font(.system(size: 9, weight: .semibold))
+      Text(
+        MetricFormatter.resetCountdown(
+          until: date,
+          now: now,
+          localizer: localizer
+        )
+      )
+      .font(CodexMeterDesign.Typography.metadata)
+      .monospacedDigit()
+      .lineLimit(1)
+    }
+    .foregroundStyle(.secondary)
+    .accessibilityElement(children: .combine)
   }
 
   private var localizer: AppLocalizer {

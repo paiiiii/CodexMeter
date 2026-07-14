@@ -57,7 +57,6 @@ final class DesignSystemTests: XCTestCase {
     XCTAssertLessThan(CodexMeterDesign.Motion.standard, CodexMeterDesign.Motion.layoutMorph)
     XCTAssertLessThan(CodexMeterDesign.Motion.layoutMorph, CodexMeterDesign.Motion.data)
     XCTAssertLessThan(CodexMeterDesign.Motion.data, CodexMeterDesign.Motion.refresh)
-    XCTAssertLessThan(CodexMeterDesign.Motion.refresh, CodexMeterDesign.Motion.pulse)
 
     XCTAssertEqual(
       CodexMeterDesign.Motion.duration(CodexMeterDesign.Motion.data, reduceMotion: false),
@@ -67,8 +66,6 @@ final class DesignSystemTests: XCTestCase {
       CodexMeterDesign.Motion.duration(CodexMeterDesign.Motion.data, reduceMotion: true),
       0
     )
-    XCTAssertTrue(CodexMeterDesign.Motion.allowsContinuousEffects(reduceMotion: false))
-    XCTAssertFalse(CodexMeterDesign.Motion.allowsContinuousEffects(reduceMotion: true))
   }
 
   func testSpacingRadiusAndMetricTokensKeepTheirHierarchy() {

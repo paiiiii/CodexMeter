@@ -18,6 +18,9 @@ All notable changes to CodexMeter are documented in this file.
 - Replaced the full/minimal view swap with one persistent quota ring and a geometry-driven glass surface, so every panel edge contracts into the ring and expands back from it.
 - Removed the hard system-window shadow and redundant normal-contrast border from Minimal mode, eliminating the dark aliased fringe around the ring.
 - Matched the menu-bar glyph's 20 pt optical footprint to neighboring native status items.
+- Removed the perpetual Live-status pulse that kept SwiftUI rendering continuously while the widget was idle.
+- Unmounted the invisible full-panel subtree after the Minimal morph completes, eliminating its hidden blur, status, and countdown work.
+- Limited refresh feedback to one bounded rotation, avoided snapshot-wide animations when only the sync timestamp changes, and added coalesced polling sleeps with offline backoff.
 
 ## [0.4.0] - 2026-07-12
 
