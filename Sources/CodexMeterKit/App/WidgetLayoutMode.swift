@@ -41,6 +41,13 @@ struct WidgetContentPolicy: Equatable, Sendable {
       && !showsControls
   }
 
+  func shouldMountFullContent(
+    isLayoutTransitioning: Bool,
+    isWidgetPresented: Bool
+  ) -> Bool {
+    isWidgetPresented && (showsHeader || isLayoutTransitioning)
+  }
+
   static func policy(for layoutMode: WidgetLayoutMode) -> WidgetContentPolicy {
     switch layoutMode {
     case .full:

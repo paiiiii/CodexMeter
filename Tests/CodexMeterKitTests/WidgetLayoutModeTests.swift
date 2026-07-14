@@ -37,6 +37,18 @@ final class WidgetLayoutModeTests: XCTestCase {
     XCTAssertTrue(full.showsSecondaryQuota)
     XCTAssertTrue(full.showsControls)
     XCTAssertFalse(full.isMinimal)
+    XCTAssertTrue(
+      full.shouldMountFullContent(
+        isLayoutTransitioning: false,
+        isWidgetPresented: true
+      )
+    )
+    XCTAssertFalse(
+      full.shouldMountFullContent(
+        isLayoutTransitioning: false,
+        isWidgetPresented: false
+      )
+    )
 
     let minimal = WidgetContentPolicy.policy(for: .minimal)
     XCTAssertTrue(minimal.isMinimal)
@@ -45,6 +57,18 @@ final class WidgetLayoutModeTests: XCTestCase {
     XCTAssertFalse(minimal.showsTokenUsage)
     XCTAssertFalse(minimal.showsSecondaryQuota)
     XCTAssertFalse(minimal.showsControls)
+    XCTAssertFalse(
+      minimal.shouldMountFullContent(
+        isLayoutTransitioning: false,
+        isWidgetPresented: true
+      )
+    )
+    XCTAssertTrue(
+      minimal.shouldMountFullContent(
+        isLayoutTransitioning: true,
+        isWidgetPresented: true
+      )
+    )
   }
 
   func testMorphResizeKeepsQuotaCenterFixedAndClampsToScreen() {

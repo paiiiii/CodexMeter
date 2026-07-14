@@ -72,7 +72,6 @@ enum CodexMeterDesign {
     static let layoutMorph: TimeInterval = 0.38
     static let data: TimeInterval = 0.42
     static let refresh: TimeInterval = 0.85
-    static let pulse: TimeInterval = 1.8
 
     static func duration(_ value: TimeInterval, reduceMotion: Bool) -> TimeInterval {
       reduceMotion ? 0 : value
@@ -86,10 +85,6 @@ enum CodexMeterDesign {
         1,
         duration: duration(value, reduceMotion: reduceMotion)
       )
-    }
-
-    static func allowsContinuousEffects(reduceMotion: Bool) -> Bool {
-      !reduceMotion
     }
   }
 }

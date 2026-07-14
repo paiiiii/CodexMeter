@@ -188,8 +188,6 @@ struct CodexMeterStatusPill: View {
   let help: String
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
-  @State private var isPulsing = false
-
   var body: some View {
     HStack(spacing: CodexMeterDesign.Spacing.compact) {
       Circle()
@@ -198,7 +196,14 @@ struct CodexMeterStatusPill: View {
           width: CodexMeterDesign.Metrics.statusDot,
           height: CodexMeterDesign.Metrics.statusDot
         )
-        .scaleEffect(isPulsing && signal.isLive ? 1.18 : 0.92)
+        .scaleEffect(signal.isLive ? 1 : 0.92)
+        .animation(
+          CodexMeterDesign.Motion.smooth(
+            CodexMeterDesign.Motion.standard,
+            reduceMotion: reduceMotion
+          ),
+          value: signal
+        )
 
       Text(title)
         .font(CodexMeterDesign.Typography.control)
@@ -208,18 +213,6 @@ struct CodexMeterStatusPill: View {
     .frame(height: 22)
     .background(CodexMeterDesign.ColorToken.softFill, in: Capsule())
     .help(help)
-    .task(id: signal) {
-      isPulsing = false
-      guard signal.isLive,
-        CodexMeterDesign.Motion.allowsContinuousEffects(reduceMotion: reduceMotion)
-      else { return }
-      withAnimation(
-        .easeInOut(duration: CodexMeterDesign.Motion.pulse)
-          .repeatForever(autoreverses: true)
-      ) {
-        isPulsing = true
-      }
-    }
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(accessibilityLabel)
     .accessibilityValue(title)
