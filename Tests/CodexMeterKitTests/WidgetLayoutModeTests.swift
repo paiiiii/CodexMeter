@@ -121,6 +121,46 @@ final class WidgetLayoutModeTests: XCTestCase {
     XCTAssertEqual(WidgetLayoutMode.minimal.localizedTitle(using: chinese), "最小化")
     XCTAssertEqual(english.string(.menuUseMinimalLayout), "Use Minimal View")
     XCTAssertEqual(chinese.string(.menuUseFullLayout), "恢复完整视图")
+    XCTAssertEqual(
+      english.string(.widgetQuotaRingToggleHelp),
+      "Double-click the quota ring to switch between Full and Minimal views."
+    )
+    XCTAssertEqual(
+      chinese.string(.widgetQuotaRingToggleHelp),
+      "双击额度圆环可在完整视图和最小化视图之间切换。"
+    )
+  }
+
+  @MainActor
+  func testLayoutToggleMovesInBothDirectionsAndPersists() throws {
+    let suiteName = "CodexMeterTests.LayoutToggle.\(UUID().uuidString)"
+    let defaults = try XCTUnwrap(UserDefaults(suiteName: suiteName))
+    defaults.removePersistentDomain(forName: suiteName)
+    defer { defaults.removePersistentDomain(forName: suiteName) }
+
+    let languageController = LanguageController(
+      defaults: defaults,
+      notificationCenter: NotificationCenter()
+    )
+    let store = UsageStore(
+      provider: LayoutTestProvider(),
+      languageController: languageController,
+      defaults: defaults
+    )
+    let coordinator = WidgetWindowCoordinator(
+      store: store,
+      languageController: languageController,
+      defaults: defaults
+    )
+
+    XCTAssertEqual(coordinator.layoutMode, .full)
+    coordinator.toggleLayoutMode()
+    XCTAssertEqual(coordinator.layoutMode, .minimal)
+    XCTAssertEqual(defaults.string(forKey: "CodexMeter.layoutMode"), "minimal")
+
+    coordinator.toggleLayoutMode()
+    XCTAssertEqual(coordinator.layoutMode, .full)
+    XCTAssertEqual(defaults.string(forKey: "CodexMeter.layoutMode"), "full")
   }
 
   func testSystemWindowShadowIsLimitedToSettledFloatingFullLayout() {

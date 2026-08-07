@@ -219,7 +219,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case widgetOpenSettings = "widget.open_settings"
   case widgetUseMinimalView = "widget.use_minimal_view"
   case widgetRestoreFullView = "widget.restore_full_view"
-  case widgetMinimalHelp = "widget.minimal_help"
+  case widgetQuotaRingToggleHelp = "widget.quota_ring_toggle_help"
   case widgetStatusSyncing = "widget.status.syncing"
   case widgetStatusCached = "widget.status.cached"
   case widgetStatusOffline = "widget.status.offline"

@@ -70,7 +70,7 @@
 "widget.open_settings" = "打开设置";
 "widget.use_minimal_view" = "最小化小组件";
 "widget.restore_full_view" = "恢复完整小组件";
-"widget.minimal_help" = "右键单击圆环或使用菜单栏恢复完整小组件。";
+"widget.quota_ring_toggle_help" = "双击额度圆环可在完整视图和最小化视图之间切换。";
 "widget.status.syncing" = "同步中";
 "widget.status.cached" = "缓存";
 "widget.status.offline" = "离线";

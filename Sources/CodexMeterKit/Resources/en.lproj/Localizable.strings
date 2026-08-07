@@ -70,7 +70,7 @@
 "widget.open_settings" = "Open Settings";
 "widget.use_minimal_view" = "Minimize Widget";
 "widget.restore_full_view" = "Restore Full Widget";
-"widget.minimal_help" = "Right-click or use the menu bar to restore the full widget.";
+"widget.quota_ring_toggle_help" = "Double-click the quota ring to switch between Full and Minimal views.";
 "widget.status.syncing" = "Syncing";
 "widget.status.cached" = "Cached";
 "widget.status.offline" = "Offline";

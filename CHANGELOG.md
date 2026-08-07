@@ -21,6 +21,7 @@ All notable changes to CodexMeter are documented in this file.
 - Removed the perpetual Live-status pulse that kept SwiftUI rendering continuously while the widget was idle.
 - Unmounted the invisible full-panel subtree after the Minimal morph completes, eliminating its hidden blur, status, and countdown work.
 - Limited refresh feedback to one bounded rotation, avoided snapshot-wide animations when only the sync timestamp changes, and added coalesced polling sleeps with offline backoff.
+- Added a full-area double-click interaction to the quota ring for switching between Full and Minimal layouts in either direction.
 
 ## [0.4.0] - 2026-07-12
 

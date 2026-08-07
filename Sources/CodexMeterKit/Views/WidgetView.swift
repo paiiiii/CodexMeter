@@ -53,14 +53,21 @@ public struct WidgetView: View {
             width: CodexMeterDesign.Metrics.quotaRing,
             height: CodexMeterDesign.Metrics.quotaRing
           )
+          .contentShape(Circle())
+          .onTapGesture(count: 2) {
+            coordinator.toggleLayoutMode()
+          }
+          .help(localizer.string(.widgetQuotaRingToggleHelp))
+          .contextMenu {
+            Button(layoutToggleTitle) {
+              coordinator.toggleLayoutMode()
+            }
+          }
+          .accessibilityAction(named: Text(layoutToggleTitle)) {
+            coordinator.toggleLayoutMode()
+          }
           .position(quotaCenter)
-
-        minimalInteractionLayer
-          .position(quotaCenter)
-          .allowsHitTesting(
-            progress < 0.005 && !coordinator.isLayoutTransitioning
-          )
-          .accessibilityHidden(progress >= 0.005)
+          .allowsHitTesting(!coordinator.isLayoutTransitioning)
       }
       .frame(
         width: geometry.size.width,
@@ -106,23 +113,12 @@ public struct WidgetView: View {
     WidgetContentPolicy.policy(for: coordinator.layoutMode)
   }
 
-  private var minimalInteractionLayer: some View {
-    Circle()
-      .fill(.clear)
-      .frame(
-        width: CodexMeterDesign.Metrics.minimalQuotaRing,
-        height: CodexMeterDesign.Metrics.minimalQuotaRing
-      )
-      .contentShape(Circle())
-      .help(localizer.string(.widgetMinimalHelp))
-      .contextMenu {
-        Button(localizer.string(.widgetRestoreFullView)) {
-          coordinator.setLayoutMode(.full)
-        }
-      }
-      .accessibilityAction(named: Text(localizer.string(.widgetRestoreFullView))) {
-        coordinator.setLayoutMode(.full)
-      }
+  private var layoutToggleTitle: String {
+    localizer.string(
+      coordinator.layoutMode == .minimal
+        ? .widgetRestoreFullView
+        : .widgetUseMinimalView
+    )
   }
 
   private var fullQuotaAnchor: UnitPoint {

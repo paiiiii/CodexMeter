@@ -46,7 +46,8 @@ No actionable P0, P1, or P2 differences remain.
 - The quota center remains invariant in pure-geometry tests, including the reverse transformation.
 - Controls and dragging are disabled only during the 0.38 s morph and restored on completion.
 - System-window shadow policy is covered for settled floating Full, Minimal, transition, and Desktop states.
-- The full Swift suite passes: 50 tests, 0 failures, with one opt-in live account test skipped by default.
+- The full Swift suite passes: 51 tests, 0 failures, with one opt-in live account test skipped by default.
+- Production interaction smoke testing confirmed that a single click leaves the layout unchanged, double-clicking the full 84 pt circular hit area switches `110 × 110 → 348 × 238 → 110 × 110`, and dragging from inside the ring still moves the panel.
 - Release signing, packaged resources, localization plists, design tokens, and whitespace validation pass.
 - Browser and browser-console checks are not applicable to this native macOS implementation.
 
