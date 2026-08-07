@@ -22,6 +22,8 @@ All notable changes to CodexMeter are documented in this file.
 - Unmounted the invisible full-panel subtree after the Minimal morph completes, eliminating its hidden blur, status, and countdown work.
 - Limited refresh feedback to one bounded rotation, avoided snapshot-wide animations when only the sync timestamp changes, and added coalesced polling sleeps with offline backoff.
 - Added a full-area double-click interaction to the quota ring for switching between Full and Minimal layouts in either direction.
+- Prevented rare long-running app exits by replacing unsafe app-server pipe reads and making broken-pipe writes return recoverable errors instead of terminating CodexMeter.
+- Bounded malformed app-server message buffering and isolated reconnect generations so delayed cleanup cannot stop a newly established connection.
 
 ## [0.4.0] - 2026-07-12
 

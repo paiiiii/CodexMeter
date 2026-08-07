@@ -61,6 +61,7 @@ public enum CodexAppServerError: LocalizedError, Equatable, Sendable {
   case binaryNotFound
   case launchFailed(String)
   case connectionClosed(Int32)
+  case connectionInterrupted
   case invalidMessage
   case rpc(String)
   case unknownRPC
@@ -78,6 +79,8 @@ public enum CodexAppServerError: LocalizedError, Equatable, Sendable {
       localizer.format(.errorLaunchFailedFormat, reason)
     case .connectionClosed(let status):
       localizer.format(.errorConnectionClosedFormat, status)
+    case .connectionInterrupted:
+      localizer.string(.errorConnectionInterrupted)
     case .invalidMessage:
       localizer.string(.errorInvalidMessage)
     case .rpc(let message):

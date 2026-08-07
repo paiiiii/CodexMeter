@@ -262,6 +262,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case errorBinaryNotFound = "error.binary_not_found"
   case errorLaunchFailedFormat = "error.launch_failed_format"
   case errorConnectionClosedFormat = "error.connection_closed_format"
+  case errorConnectionInterrupted = "error.connection_interrupted"
   case errorInvalidMessage = "error.invalid_message"
   case errorRPCFormat = "error.rpc_format"
   case errorRequestTimedOut = "error.request_timed_out"

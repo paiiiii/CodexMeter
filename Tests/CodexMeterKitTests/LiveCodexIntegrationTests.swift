@@ -27,4 +27,22 @@ final class LiveCodexIntegrationTests: XCTestCase {
       throw error
     }
   }
+
+  func testRepeatedLiveStartupAndShutdown() async throws {
+    guard ProcessInfo.processInfo.environment["CODEX_METER_LIVE_TESTS"] == "1" else {
+      throw XCTSkip("Set CODEX_METER_LIVE_TESTS=1 to exercise the installed Codex app-server.")
+    }
+
+    let client = CodexAppServerClient()
+    do {
+      for _ in 0..<10 {
+        let snapshot = try await client.fetchUsage()
+        XCTAssertTrue((0...100).contains(snapshot.primary?.remainingPercent ?? -1))
+        await client.shutdown()
+      }
+    } catch {
+      await client.shutdown()
+      throw error
+    }
+  }
 }

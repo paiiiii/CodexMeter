@@ -113,6 +113,7 @@
 "error.binary_not_found" = "Codex could not be found. Install and sign in to the Codex or ChatGPT desktop app, or set CODEX_METER_CODEX_PATH.";
 "error.launch_failed_format" = "The local Codex app-server could not start: %@";
 "error.connection_closed_format" = "The Codex app-server exited with status %d.";
+"error.connection_interrupted" = "The Codex connection was interrupted. CodexMeter will retry automatically.";
 "error.invalid_message" = "The Codex app-server returned data that could not be recognized.";
 "error.rpc_format" = "Codex app-server: %@";
 "error.request_timed_out" = "The Codex usage request timed out. Check your network connection and sign-in status.";

@@ -83,21 +83,36 @@ enum UsageResponseMapper {
 }
 
 struct JSONLineFramer: Sendable {
+  private let maximumFrameSize: Int
   private var buffer = Data()
 
-  mutating func append(_ data: Data) -> [Data] {
+  init(maximumFrameSize: Int = 4 * 1_024 * 1_024) {
+    precondition(maximumFrameSize > 0)
+    self.maximumFrameSize = maximumFrameSize
+  }
+
+  mutating func append(_ data: Data) throws -> [Data] {
     buffer.append(data)
     var lines: [Data] = []
 
     while let newline = buffer.firstIndex(of: 0x0A) {
       var line = Data(buffer[..<newline])
       buffer.removeSubrange(...newline)
+      guard line.count <= maximumFrameSize else {
+        buffer.removeAll(keepingCapacity: false)
+        throw CodexAppServerError.invalidMessage
+      }
       if line.last == 0x0D {
         line.removeLast()
       }
       if !line.isEmpty {
         lines.append(line)
       }
+    }
+
+    guard buffer.count <= maximumFrameSize else {
+      buffer.removeAll(keepingCapacity: false)
+      throw CodexAppServerError.invalidMessage
     }
 
     return lines
