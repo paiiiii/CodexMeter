@@ -30,6 +30,10 @@ enum CodexMeterDesign {
     static let minimalQuotaRing: CGFloat = 84
     static let quotaStroke: CGFloat = 6
     static let minimalGlassDiameter = minimalQuotaRing - quotaStroke
+    /// Widest line the ring center can hold without touching the quota stroke.
+    static let ringContentWidth: CGFloat = 46
+    static let ringStatLabelWidth: CGFloat = 18
+    static let ringStatValueWidth: CGFloat = 25
     static let controlHeight: CGFloat = 28
     static let iconControl: CGFloat = 28
     static let modeControlWidth: CGFloat = 68
@@ -47,7 +51,10 @@ enum CodexMeterDesign {
   enum Typography {
     static let brand = Font.system(size: 10, weight: .semibold, design: .rounded)
     static let heroMetric = Font.system(size: 30, weight: .medium, design: .rounded)
-    static let quotaMetric = Font.system(size: 23, weight: .semibold, design: .rounded)
+    static let quotaMetric = Font.system(size: 15, weight: .semibold, design: .rounded)
+    static let quotaWindowTag = Font.system(size: 7, weight: .semibold, design: .rounded)
+    static let systemStatLabel = Font.system(size: 7.5, weight: .semibold, design: .rounded)
+    static let systemStatValue = Font.system(size: 8.5, weight: .semibold, design: .rounded)
     static let sectionLabel = Font.system(size: 10, weight: .semibold, design: .rounded)
     static let body = Font.system(size: 11, weight: .medium)
     static let metadata = Font.system(size: 10, weight: .medium, design: .monospaced)
@@ -109,6 +116,46 @@ enum QuotaSeverity: String, CaseIterable, Sendable {
     case .unavailable: .secondary
     case .healthy: CodexMeterDesign.ColorToken.signal
     case .caution: CodexMeterDesign.ColorToken.caution
+    case .critical: CodexMeterDesign.ColorToken.critical
+    }
+  }
+}
+
+/// Pressure on a local system resource, where a higher reading is worse. Quotas
+/// use `QuotaSeverity`, which classifies what is left instead of what is used.
+enum SystemLoadSeverity: String, CaseIterable, Sendable {
+  case nominal
+  case elevated
+  case critical
+
+  static let elevatedPercent = 75
+  static let criticalPercent = 90
+  static let elevatedSwapBytes: UInt64 = 1_073_741_824
+  static let criticalSwapBytes: UInt64 = 4_294_967_296
+
+  static func classify(usedPercent: Int?) -> SystemLoadSeverity {
+    guard let usedPercent else { return .nominal }
+    switch usedPercent {
+    case criticalPercent...: return .critical
+    case elevatedPercent...: return .elevated
+    default: return .nominal
+    }
+  }
+
+  static func classifySwap(usedBytes: UInt64?) -> SystemLoadSeverity {
+    guard let usedBytes else { return .nominal }
+    switch usedBytes {
+    case criticalSwapBytes...: return .critical
+    case elevatedSwapBytes...: return .elevated
+    default: return .nominal
+    }
+  }
+
+  /// Silence until it matters: a nominal reading stays in the neutral text tone.
+  var color: Color {
+    switch self {
+    case .nominal: .primary
+    case .elevated: CodexMeterDesign.ColorToken.caution
     case .critical: CodexMeterDesign.ColorToken.critical
     }
   }

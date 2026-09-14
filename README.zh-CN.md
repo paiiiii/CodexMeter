@@ -16,6 +16,7 @@ CodexMeter 是一枚原生、本地优先的 macOS 菜单栏用量小组件，�
 
 - 显示 Codex 速率限制窗口、剩余比例与实时 5 小时重置倒计时。
 - 显示账户服务返回的当天 Token 活动汇总。
+- 在额度圆环内显示本机负载：主内存使用率、已用 swap 和启动磁盘使用率。最小化布局同样保留这些数值，悬停可查看精确容量。
 - 支持三种小组件模式：
   - **始终置顶**：跨桌面空间显示，并保持在普通窗口上方。
   - **固定桌面**：停留在普通窗口后方，作为低干扰桌面插件。
@@ -142,6 +143,7 @@ CODEX_METER_LIVE_TESTS=1 swift test --filter LiveCodexIntegrationTests
 - 不读取、提交或打包 `.env`、API key、Codex 登录文件及常见凭据文件。
 - app-server 使用现有 Codex 登录态向 OpenAI 请求账户用量；本地部署不等于离线统计。
 - UI 仅供参考，不应被视为账单、发票或成本审计来源。
+- 内存、swap 和磁盘数据全部来自本机内核（`host_statistics64`、`vm.swapusage`、卷容量），不会离开这台 Mac。
 - 打包脚本只复制 Release 可执行文件、`Info.plist`、AppIcon 与声明的 SwiftPM 资源包。
 
 漏洞报告方式见 [SECURITY.md](SECURITY.md)。

@@ -38,7 +38,7 @@
 "settings.launch_at_login" = "登录时自动启动";
 "settings.open_login_items" = "打开登录项设置";
 "settings.privacy.section" = "隐私";
-"settings.privacy.description" = "CodexMeter 只与本机 Codex 进程通信，不读取 auth.json，也不会上传或保存你的凭证。额度和 Token 数据由 Codex 官方本地 app-server 返回。";
+"settings.privacy.description" = "CodexMeter 只与本机 Codex 进程通信，不读取 auth.json，也不会上传或保存你的凭证。额度和 Token 数据由 Codex 官方本地 app-server 返回。内存、swap 和磁盘数据读取自本机内核，不会离开这台 Mac。";
 
 "common.refreshing" = "正在刷新…";
 "common.settings" = "设置";
@@ -79,21 +79,29 @@
 "widget.data_source_help" = "数据来自本机 Codex app-server";
 "widget.connection_status_accessibility" = "连接状态";
 
-"quota.primary" = "主要";
 "quota.primary_limit" = "主要额度";
 "quota.secondary_limit" = "次要额度";
 "quota.remaining_format" = "剩余 %@";
-"quota.short_fallback_format" = "%@窗口";
 "quota.days.one" = "%d 天额度";
 "quota.days.other" = "%d 天额度";
 "quota.hours.one" = "%d 小时额度";
 "quota.hours.other" = "%d 小时额度";
 "quota.minutes.one" = "%d 分钟额度";
 "quota.minutes.other" = "%d 分钟额度";
-"quota.short_days_format" = "%dD 窗口";
-"quota.short_hours_format" = "%dH 窗口";
-"quota.short_minutes_format" = "%dM 窗口";
+"quota.tight_days_format" = "%dD";
+"quota.tight_hours_format" = "%dH";
+"quota.tight_minutes_format" = "%dM";
 "quota.accessibility_format" = "剩余 %@，%@";
+
+"system.memory_tag" = "内存";
+"system.swap_tag" = "交换";
+"system.disk_tag" = "磁盘";
+"system.memory_help_format" = "内存 · 已用 %@ / %@";
+"system.swap_help_format" = "交换 · 已用 %@";
+"system.swap_idle_help" = "交换 · 未使用";
+"system.disk_help_format" = "磁盘 · 已用 %@ / %@，剩余 %@";
+"system.unavailable" = "系统信息不可用";
+"system.accessibility_format" = "内存 %@，交换 %@，磁盘 %@";
 
 "reset.waiting_for_sync" = "等待同步";
 "reset.soon" = "即将重置";

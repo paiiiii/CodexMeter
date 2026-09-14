@@ -19,7 +19,8 @@ The automated suite should cover:
 - localized key completeness for English and Simplified Chinese;
 - format-placeholder parity between localizations;
 - accessibility labels for icon-only controls and metric summaries;
-- state mapping for Connecting, Syncing, Live, Cached, and Offline.
+- state mapping for Connecting, Syncing, Live, Cached, and Offline;
+- system-load severity boundaries, ring-value width limits, and the hidden-widget sampling slowdown.
 - settled Full, Minimal, Desktop, and Hidden states contain no perpetual animation or continuously invalidated invisible subtree.
 
 An image-rendering smoke test may catch crashes or missing resources, but it cannot prove material contrast, correct window levels, text legibility, or crop safety.

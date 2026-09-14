@@ -38,7 +38,7 @@
 "settings.launch_at_login" = "Launch at Login";
 "settings.open_login_items" = "Open Login Items Settings";
 "settings.privacy.section" = "Privacy";
-"settings.privacy.description" = "CodexMeter communicates only with the local Codex process. It does not read auth.json or upload or store your credentials. Quota and token data come from the official local Codex app-server.";
+"settings.privacy.description" = "CodexMeter communicates only with the local Codex process. It does not read auth.json or upload or store your credentials. Quota and token data come from the official local Codex app-server. Memory, swap, and disk readings are taken from the local kernel and never leave this Mac.";
 
 "common.refreshing" = "Refreshing…";
 "common.settings" = "Settings";
@@ -79,21 +79,29 @@
 "widget.data_source_help" = "Data comes from the local Codex app-server";
 "widget.connection_status_accessibility" = "Connection status";
 
-"quota.primary" = "PRIMARY";
 "quota.primary_limit" = "Primary limit";
 "quota.secondary_limit" = "Secondary limit";
 "quota.remaining_format" = "%@ remaining";
-"quota.short_fallback_format" = "%@ WINDOW";
 "quota.days.one" = "%d-day limit";
 "quota.days.other" = "%d-day limit";
 "quota.hours.one" = "%d-hour limit";
 "quota.hours.other" = "%d-hour limit";
 "quota.minutes.one" = "%d-minute limit";
 "quota.minutes.other" = "%d-minute limit";
-"quota.short_days_format" = "%dD WINDOW";
-"quota.short_hours_format" = "%dH WINDOW";
-"quota.short_minutes_format" = "%dM WINDOW";
+"quota.tight_days_format" = "%dD";
+"quota.tight_hours_format" = "%dH";
+"quota.tight_minutes_format" = "%dM";
 "quota.accessibility_format" = "%@ remaining, %@";
+
+"system.memory_tag" = "MEM";
+"system.swap_tag" = "SWP";
+"system.disk_tag" = "SSD";
+"system.memory_help_format" = "Memory · %@ of %@ used";
+"system.swap_help_format" = "Swap · %@ used";
+"system.swap_idle_help" = "Swap · not in use";
+"system.disk_help_format" = "Disk · %@ of %@ used, %@ free";
+"system.unavailable" = "System metrics unavailable";
+"system.accessibility_format" = "Memory %@, swap %@, disk %@";
 
 "reset.waiting_for_sync" = "Waiting for sync";
 "reset.soon" = "Resetting soon";

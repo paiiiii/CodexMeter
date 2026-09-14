@@ -180,6 +180,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   public private(set) var layoutMode: WidgetLayoutMode
   public private(set) var isLayoutTransitioning = false
   public private(set) var isWidgetPresented: Bool
+  public let systemStore: SystemMetricsStore
 
   private enum Keys {
     static let mode = "CodexMeter.presentationMode"
@@ -221,11 +222,13 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   public init(
     store: UsageStore,
     languageController: LanguageController,
-    defaults: UserDefaults = .standard
+    defaults: UserDefaults = .standard,
+    systemMetricsProvider: any SystemMetricsProviding = DarwinSystemMetricsProvider()
   ) {
     self.store = store
     self.languageController = languageController
     self.defaults = defaults
+    systemStore = SystemMetricsStore(provider: systemMetricsProvider)
 
     let savedMode =
       defaults.string(forKey: Keys.mode)
@@ -253,6 +256,11 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
       object: nil
     )
     apply(mode, animated: false)
+    systemStore.start()
+  }
+
+  public func stop() {
+    systemStore.stop()
   }
 
   public func setMode(_ newMode: WidgetPresentationMode) {
@@ -357,6 +365,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     let currentTransitionID = UUID()
     transitionID = currentTransitionID
     store.setWidgetVisible(policy.isVisible)
+    systemStore.setWidgetVisible(policy.isVisible)
     let shouldAnimate = animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
 
     if !policy.isVisible {
