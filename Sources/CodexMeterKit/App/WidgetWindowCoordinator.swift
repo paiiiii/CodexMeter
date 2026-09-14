@@ -197,7 +197,26 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   private var layoutTransitionID = UUID()
 
   @ObservationIgnored
-  private lazy var panel: CodexMeterPanel = makePanel()
+  private var panelStorage: CodexMeterPanel?
+
+  /// A `lazy var` re-runs its initializer when it is read re-entrantly, and
+  /// restoring the saved frame makes AppKit post screen-change notifications to
+  /// this delegate, which reads the panel back. Publishing the panel before
+  /// configuring it — and attaching the delegate only once configuration is
+  /// finished — keeps such a callback from building a second panel, which
+  /// recursed until the main thread ran out of stack.
+  private var panel: CodexMeterPanel {
+    if let panelStorage { return panelStorage }
+    let panel = CodexMeterPanel(
+      contentRect: NSRect(origin: .zero, size: widgetSize),
+      styleMask: [.borderless, .nonactivatingPanel],
+      backing: .buffered,
+      defer: false
+    )
+    panelStorage = panel
+    configure(panel)
+    return panel
+  }
 
   public init(
     store: UsageStore,
@@ -294,15 +313,8 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     panel.orderFrontRegardless()
   }
 
-  private func makePanel() -> CodexMeterPanel {
+  private func configure(_ panel: CodexMeterPanel) {
     let initialSize = widgetSize
-    let panel = CodexMeterPanel(
-      contentRect: NSRect(origin: .zero, size: initialSize),
-      styleMask: [.borderless, .nonactivatingPanel],
-      backing: .buffered,
-      defer: false
-    )
-    panel.delegate = self
     panel.title = "CodexMeter"
     panel.isOpaque = false
     panel.backgroundColor = .clear
@@ -336,7 +348,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
       positionAtTopRight(panel)
     }
     clampToVisibleScreen(panel)
-    return panel
+    panel.delegate = self
   }
 
   private func apply(_ mode: WidgetPresentationMode, animated: Bool) {

@@ -23,6 +23,7 @@ All notable changes to CodexMeter are documented in this file.
 - Limited refresh feedback to one bounded rotation, avoided snapshot-wide animations when only the sync timestamp changes, and added coalesced polling sleeps with offline backoff.
 - Added a full-area double-click interaction to the quota ring for switching between Full and Minimal layouts in either direction.
 - Prevented rare long-running app exits by replacing unsafe app-server pipe reads and making broken-pipe writes return recoverable errors instead of terminating CodexMeter.
+- Fixed a launch-time crash where restoring the saved window frame could post a screen-change notification to the panel's own delegate while the `lazy var` holding it was still initializing, so each callback built another panel until the main thread's stack was exhausted. The panel is now published before it is configured and becomes its own delegate only once configuration finishes.
 - Bounded malformed app-server message buffering and isolated reconnect generations so delayed cleanup cannot stop a newly established connection.
 
 ## [0.4.0] - 2026-07-12
