@@ -60,6 +60,7 @@ public struct WidgetView: View {
         .onTapGesture(count: 2) {
           coordinator.toggleLayoutMode()
         }
+        .simultaneousGesture(widgetDragGesture)
         .help(quotaRingHelp)
         .contextMenu {
           Button(layoutToggleTitle) {
@@ -114,6 +115,15 @@ public struct WidgetView: View {
 
   private var contentPolicy: WidgetContentPolicy {
     WidgetContentPolicy.policy(for: coordinator.layoutMode)
+  }
+
+  /// The ring's tap gesture takes mouse-down away from AppKit, so the widget
+  /// would otherwise be pinned in place wherever the ring covers it. The
+  /// activation distance keeps a stationary double-click from starting a drag.
+  private var widgetDragGesture: some Gesture {
+    DragGesture(minimumDistance: CodexMeterDesign.Metrics.dragActivation)
+      .onChanged { _ in coordinator.dragWidget() }
+      .onEnded { _ in coordinator.endWidgetDrag() }
   }
 
   private var quotaRingHelp: String {

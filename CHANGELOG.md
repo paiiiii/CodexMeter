@@ -26,6 +26,7 @@ All notable changes to CodexMeter are documented in this file.
 - Added a full-area double-click interaction to the quota ring for switching between Full and Minimal layouts in either direction.
 - Prevented rare long-running app exits by replacing unsafe app-server pipe reads and making broken-pipe writes return recoverable errors instead of terminating CodexMeter.
 - Reduced the quota ring's center type and collapsed its window label from `5H WINDOW` to a `5H` tag, so the quota percentage and three system readings fit inside the 84 pt ring in both layouts and both languages.
+- Fixed the widget being impossible to drag: the quota ring's double-click gesture consumes mouse-down, which switches off AppKit's window-background dragging wherever the ring covers the widget — the whole surface in the Minimal layout. The ring now moves the window itself, tracking the pointer in screen coordinates.
 - Fixed a launch-time crash where restoring the saved window frame could post a screen-change notification to the panel's own delegate while the `lazy var` holding it was still initializing, so each callback built another panel until the main thread's stack was exhausted. The panel is now published before it is configured and becomes its own delegate only once configuration finishes.
 - Bounded malformed app-server message buffering and isolated reconnect generations so delayed cleanup cannot stop a newly established connection.
 

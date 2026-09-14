@@ -39,6 +39,8 @@ enum CodexMeterDesign {
     static let modeControlWidth: CGFloat = 68
     static let settingsControlWidth: CGFloat = 78
     static let statusDot: CGFloat = 6
+    /// Pointer travel that separates dragging the widget from clicking it.
+    static let dragActivation: CGFloat = 4
 
     static func widgetSize(for layoutMode: WidgetLayoutMode) -> CGSize {
       switch layoutMode {

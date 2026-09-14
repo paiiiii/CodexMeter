@@ -114,6 +114,29 @@ final class WidgetLayoutModeTests: XCTestCase {
     XCTAssertEqual(clamped.maxY, visibleFrame.maxY - 10)
   }
 
+  func testDragAnchorFollowsThePointerInScreenCoordinates() {
+    let anchor = WidgetDragAnchor(
+      windowOrigin: CGPoint(x: 900, y: 500),
+      pointerOrigin: CGPoint(x: 950, y: 560)
+    )
+
+    XCTAssertEqual(
+      anchor.origin(forPointer: CGPoint(x: 950, y: 560)),
+      CGPoint(x: 900, y: 500),
+      "Anchoring must not move the widget"
+    )
+    XCTAssertEqual(
+      anchor.origin(forPointer: CGPoint(x: 1_000, y: 620)),
+      CGPoint(x: 950, y: 560),
+      "The widget travels with the pointer, one point per point"
+    )
+    XCTAssertEqual(
+      anchor.origin(forPointer: CGPoint(x: 900, y: 500)),
+      CGPoint(x: 850, y: 440),
+      "Dragging back past the origin keeps the same offset"
+    )
+  }
+
   func testLayoutTitlesAndActionsAreLocalized() {
     XCTAssertEqual(WidgetLayoutMode.full.localizedTitle(using: english), "Full")
     XCTAssertEqual(WidgetLayoutMode.minimal.localizedTitle(using: english), "Minimal")

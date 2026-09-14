@@ -38,6 +38,24 @@ struct WidgetWindowGeometry {
   }
 }
 
+/// Where the widget lands while the pointer drags it.
+///
+/// The anchor stores both the window origin and the pointer position in screen
+/// coordinates, taken when the drag starts. Screen coordinates are the point:
+/// the window moves out from under the gesture's own coordinate space, so a
+/// translation measured there would feed back into itself and stutter.
+struct WidgetDragAnchor: Equatable, Sendable {
+  let windowOrigin: CGPoint
+  let pointerOrigin: CGPoint
+
+  func origin(forPointer pointer: CGPoint) -> CGPoint {
+    CGPoint(
+      x: windowOrigin.x + (pointer.x - pointerOrigin.x),
+      y: windowOrigin.y + (pointer.y - pointerOrigin.y)
+    )
+  }
+}
+
 struct WidgetMorphGeometry {
   static let fullQuotaCenterTopLeading = CGPoint(x: 63, y: 99)
   static let minimalQuotaCenterTopLeading = CGPoint(x: 55, y: 55)
@@ -198,6 +216,9 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   private var layoutTransitionID = UUID()
 
   @ObservationIgnored
+  private var dragAnchor: WidgetDragAnchor?
+
+  @ObservationIgnored
   private var panelStorage: CodexMeterPanel?
 
   /// A `lazy var` re-runs its initializer when it is read re-entrantly, and
@@ -291,6 +312,27 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
 
   public func toggleLayoutMode() {
     setLayoutMode(layoutMode == .minimal ? .full : .minimal)
+  }
+
+  /// Moves the widget with the pointer.
+  ///
+  /// The quota ring carries a tap gesture, and a SwiftUI gesture consumes
+  /// mouse-down, which switches off AppKit's own window-background dragging
+  /// wherever it applies. In the Minimal layout the ring is the whole widget, so
+  /// without this the widget cannot be moved at all.
+  public func dragWidget(pointer: CGPoint = NSEvent.mouseLocation) {
+    guard !isLayoutTransitioning else { return }
+    let anchor =
+      dragAnchor
+      ?? WidgetDragAnchor(windowOrigin: panel.frame.origin, pointerOrigin: pointer)
+    dragAnchor = anchor
+    panel.setFrameOrigin(anchor.origin(forPointer: pointer))
+  }
+
+  public func endWidgetDrag() {
+    guard dragAnchor != nil else { return }
+    dragAnchor = nil
+    clampToVisibleScreen(panel)
   }
 
   var widgetSize: NSSize {
@@ -433,6 +475,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     let currentLayoutTransitionID = UUID()
     layoutTransitionID = currentLayoutTransitionID
     isLayoutTransitioning = true
+    dragAnchor = nil
     panel.isMovableByWindowBackground = false
     panel.hasShadow = false
 
@@ -524,6 +567,10 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   }
 
   public func windowDidChangeScreen(_ notification: Notification) {
+    // Dragging onto another display crosses this callback; clamping here would
+    // yank the widget out from under the pointer. `endWidgetDrag` clamps once
+    // the pointer is released.
+    guard dragAnchor == nil else { return }
     clampToVisibleScreen(panel)
   }
 }
