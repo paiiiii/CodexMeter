@@ -82,6 +82,8 @@ CodexMeter 启动本机 `codex app-server`，通过 stdio 上的 JSON-RPC 通信
 - `account/rateLimits/read`：账户速率限制窗口与重置时间。
 - `account/usage/read`：Token 汇总与每日用量桶。
 
+CodexMeter 会自动查找 `/Applications` 或 `~/Applications` 内 Codex/ChatGPT 自带的原生 CLI，兼容新版嵌套 `CodexCLI.app` 和旧版目录结构，并优先于依赖 shell 环境的 CLI 启动器。因此，从 Finder 或登录项启动时无需在系统 `PATH` 中配置 Node。自定义安装位置仍可通过 `CODEX_METER_CODEX_PATH` 指定。
+
 登录和 Token 刷新由 Codex 管理。CodexMeter 不要求粘贴 API key，也不会复制或保存 Codex 认证文件。协议详情见 [OpenAI Codex app-server README](https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md)。
 
 ## 架构

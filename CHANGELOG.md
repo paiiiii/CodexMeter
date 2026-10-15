@@ -4,6 +4,11 @@ All notable changes to CodexMeter are documented in this file.
 
 ## [Unreleased]
 
+### Fixed
+
+- Restored connections after Codex/ChatGPT moved its native CLI into a nested `CodexCLI.app` bundle. Desktop launches now find the bundled executable before Node-dependent npm launchers, with support for both system and per-user Applications folders.
+- Preserved manual Chinese localization with toolchains that retain the `zh-Hans.lproj` directory's original capitalization.
+
 ### Added
 
 - An independent Minimal widget layout that keeps only the primary quota ring and its center content.

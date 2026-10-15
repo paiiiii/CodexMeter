@@ -40,8 +40,10 @@ enum SupportedAppLanguage: String, CaseIterable, Sendable {
     Locale(identifier: rawValue)
   }
 
-  var resourceDirectoryName: String {
-    rawValue.lowercased()
+  func resourceDirectoryName(in bundle: Bundle) -> String {
+    bundle.localizations.first {
+      $0.caseInsensitiveCompare(rawValue) == .orderedSame
+    } ?? rawValue
   }
 
   static func resolve(preferredLanguages: [String]) -> SupportedAppLanguage {
@@ -332,7 +334,7 @@ struct AppLocalizer: Sendable {
   private var localizedBundle: Bundle {
     guard
       let url = CodexMeterResources.bundle.url(
-        forResource: language.resourceDirectoryName,
+        forResource: language.resourceDirectoryName(in: CodexMeterResources.bundle),
         withExtension: "lproj"
       ),
       let bundle = Bundle(url: url)

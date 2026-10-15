@@ -84,6 +84,8 @@ CodexMeter starts the local `codex app-server` and communicates with it through 
 - `account/rateLimits/read` for account rate-limit windows and reset times.
 - `account/usage/read` for token summaries and daily usage buckets.
 
+CodexMeter automatically finds the native CLI bundled with Codex or ChatGPT in `/Applications` or `~/Applications`, including the newer nested `CodexCLI.app` bundle and older app layouts. It prefers these bundled executables over shell-dependent CLI launchers, so launching CodexMeter from Finder or at login does not require Node on the system `PATH`. A custom installation can still be selected with `CODEX_METER_CODEX_PATH`.
+
 Codex manages sign-in and token refresh. CodexMeter does not ask you to paste an API key, and it does not copy or save Codex authentication files. See the [OpenAI Codex app-server README](https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md) for protocol details.
 
 ## Architecture
