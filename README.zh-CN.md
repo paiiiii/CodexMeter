@@ -16,6 +16,7 @@ CodexMeter 是一枚原生、本地优先的 macOS 菜单栏用量小组件，�
 
 - 显示 Codex 速率限制窗口、剩余比例与实时 5 小时重置倒计时。
 - 显示账户服务返回的当天 Token 活动汇总。
+- 在额度圆环内显示本机负载：主内存使用率、已用 swap 和启动磁盘使用率。最小化布局同样保留这些数值，悬停可查看精确容量。
 - 支持三种小组件模式：
   - **始终置顶**：跨桌面空间显示，并保持在普通窗口上方。
   - **固定桌面**：停留在普通窗口后方，作为低干扰桌面插件。
@@ -81,6 +82,8 @@ CodexMeter 启动本机 `codex app-server`，通过 stdio 上的 JSON-RPC 通信
 - `account/rateLimits/read`：账户速率限制窗口与重置时间。
 - `account/usage/read`：Token 汇总与每日用量桶。
 
+CodexMeter 会自动查找 `/Applications` 或 `~/Applications` 内 Codex/ChatGPT 自带的原生 CLI，兼容新版嵌套 `CodexCLI.app` 和旧版目录结构，并优先于依赖 shell 环境的 CLI 启动器。因此，从 Finder 或登录项启动时无需在系统 `PATH` 中配置 Node。自定义安装位置仍可通过 `CODEX_METER_CODEX_PATH` 指定。
+
 登录和 Token 刷新由 Codex 管理。CodexMeter 不要求粘贴 API key，也不会复制或保存 Codex 认证文件。协议详情见 [OpenAI Codex app-server README](https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md)。
 
 ## 架构
@@ -142,6 +145,7 @@ CODEX_METER_LIVE_TESTS=1 swift test --filter LiveCodexIntegrationTests
 - 不读取、提交或打包 `.env`、API key、Codex 登录文件及常见凭据文件。
 - app-server 使用现有 Codex 登录态向 OpenAI 请求账户用量；本地部署不等于离线统计。
 - UI 仅供参考，不应被视为账单、发票或成本审计来源。
+- 内存、swap 和磁盘数据全部来自本机内核（`host_statistics64`、`vm.swapusage`、卷容量），不会离开这台 Mac。
 - 打包脚本只复制 Release 可执行文件、`Info.plist`、AppIcon 与声明的 SwiftPM 资源包。
 
 漏洞报告方式见 [SECURITY.md](SECURITY.md)。

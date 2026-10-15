@@ -16,6 +16,7 @@ CodexMeter is a native, local-first macOS menu-bar companion for monitoring Code
 
 - Shows the remaining percentage for Codex rate-limit windows and a live 5-hour reset countdown.
 - Displays the daily token activity returned by the account service.
+- Reads local machine pressure inside the quota ring: main memory usage, swap in use, and startup-volume usage. Values stay visible in the Minimal layout, and a tooltip expands them to exact byte counts.
 - Supports three widget presentation modes:
   - **Always on Top** keeps the widget above regular windows across Spaces.
   - **Desktop** places it behind regular windows as a low-distraction desktop companion.
@@ -83,6 +84,8 @@ CodexMeter starts the local `codex app-server` and communicates with it through 
 - `account/rateLimits/read` for account rate-limit windows and reset times.
 - `account/usage/read` for token summaries and daily usage buckets.
 
+CodexMeter automatically finds the native CLI bundled with Codex or ChatGPT in `/Applications` or `~/Applications`, including the newer nested `CodexCLI.app` bundle and older app layouts. It prefers these bundled executables over shell-dependent CLI launchers, so launching CodexMeter from Finder or at login does not require Node on the system `PATH`. A custom installation can still be selected with `CODEX_METER_CODEX_PATH`.
+
 Codex manages sign-in and token refresh. CodexMeter does not ask you to paste an API key, and it does not copy or save Codex authentication files. See the [OpenAI Codex app-server README](https://github.com/openai/codex/blob/main/codex-rs/app-server/README.md) for protocol details.
 
 ## Architecture
@@ -144,6 +147,7 @@ CODEX_METER_LIVE_TESTS=1 swift test --filter LiveCodexIntegrationTests
 - `.env`, API keys, Codex sign-in files, certificates, and common credential files are excluded from source control and app packaging.
 - The app-server uses your existing Codex sign-in to request account usage from OpenAI; local deployment does not mean offline accounting.
 - The UI is informational and should not be treated as a bill, invoice, or cost-audit source.
+- Memory, swap, and disk readings come from the local kernel (`host_statistics64`, `vm.swapusage`, volume capacity) and never leave this Mac.
 - The packaging script copies only the release executable, `Info.plist`, AppIcon, and declared SwiftPM resource bundles.
 
 See [SECURITY.md](SECURITY.md) for vulnerability reporting.

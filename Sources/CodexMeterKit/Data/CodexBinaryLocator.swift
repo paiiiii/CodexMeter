@@ -39,9 +39,22 @@ public struct CodexBinaryLocator: Sendable {
       values.append(override)
     }
 
+    // Desktop apps must use the bundled native CLI before npm launchers,
+    // which depend on Node being present in a login shell's PATH.
+    let desktopApplications = [
+      "/Applications/Codex.app",
+      "/Applications/ChatGPT.app",
+      "~/Applications/Codex.app",
+      "~/Applications/ChatGPT.app",
+    ]
+    for application in desktopApplications {
+      values.append(contentsOf: [
+        "\(application)/Contents/Resources/codex-cli/CodexCLI.app/Contents/MacOS/codex",
+        "\(application)/Contents/Resources/codex",
+      ])
+    }
+
     values.append(contentsOf: [
-      "/Applications/Codex.app/Contents/Resources/codex",
-      "/Applications/ChatGPT.app/Contents/Resources/codex",
       "~/.local/bin/codex",
       "/opt/homebrew/bin/codex",
       "/usr/local/bin/codex",
@@ -61,6 +74,7 @@ public enum CodexAppServerError: LocalizedError, Equatable, Sendable {
   case binaryNotFound
   case launchFailed(String)
   case connectionClosed(Int32)
+  case connectionInterrupted
   case invalidMessage
   case rpc(String)
   case unknownRPC
@@ -78,6 +92,8 @@ public enum CodexAppServerError: LocalizedError, Equatable, Sendable {
       localizer.format(.errorLaunchFailedFormat, reason)
     case .connectionClosed(let status):
       localizer.format(.errorConnectionClosedFormat, status)
+    case .connectionInterrupted:
+      localizer.string(.errorConnectionInterrupted)
     case .invalidMessage:
       localizer.string(.errorInvalidMessage)
     case .rpc(let message):

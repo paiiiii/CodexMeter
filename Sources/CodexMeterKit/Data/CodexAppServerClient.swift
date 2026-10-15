@@ -7,6 +7,7 @@ public actor CodexAppServerClient: UsageProviding {
   }
 
   private let locator: CodexBinaryLocator
+  private let processArguments: [String]
   private let timeout: Duration
   private let now: @Sendable () -> Date
   private let timeZone: @Sendable () -> TimeZone
@@ -15,6 +16,8 @@ public actor CodexAppServerClient: UsageProviding {
   private var inputHandle: FileHandle?
   private var outputPipe: Pipe?
   private var errorPipe: Pipe?
+  private var stdoutReader: ProcessPipeReader?
+  private var stderrReader: ProcessPipeReader?
   private var stdoutReaderTask: Task<Void, Never>?
   private var stderrReaderTask: Task<Void, Never>?
   private var generation: UUID?
@@ -29,6 +32,7 @@ public actor CodexAppServerClient: UsageProviding {
 
   public init() {
     locator = CodexBinaryLocator()
+    processArguments = Self.defaultProcessArguments
     timeout = .seconds(20)
     now = Date.init
     timeZone = { .autoupdatingCurrent }
@@ -36,11 +40,13 @@ public actor CodexAppServerClient: UsageProviding {
 
   init(
     locator: CodexBinaryLocator,
+    processArguments: [String] = CodexAppServerClient.defaultProcessArguments,
     timeout: Duration = .seconds(20),
     now: @escaping @Sendable () -> Date = Date.init,
     timeZone: @escaping @Sendable () -> TimeZone = { .autoupdatingCurrent }
   ) {
     self.locator = locator
+    self.processArguments = processArguments
     self.timeout = timeout
     self.now = now
     self.timeZone = timeZone
@@ -67,21 +73,27 @@ public actor CodexAppServerClient: UsageProviding {
   }
 
   public func shutdown() async {
-    fetchTask?.cancel()
+    let activeFetch = fetchTask
+    activeFetch?.cancel()
     fetchTask = nil
     fetchID = nil
     stopProcess(resumingPendingWith: CancellationError())
+    if let activeFetch {
+      _ = await activeFetch.result
+    }
   }
 
   private func performFetch() async throws -> UsageSnapshot {
-    do {
-      try await ensureStarted()
+    let activeGeneration = try await ensureStarted()
 
+    do {
       async let rateLimits: RateLimitsResult = requestDecoded(
-        method: "account/rateLimits/read"
+        method: "account/rateLimits/read",
+        generation: activeGeneration
       )
       async let usage: AccountUsageResult = requestDecoded(
-        method: "account/usage/read"
+        method: "account/usage/read",
+        generation: activeGeneration
       )
 
       return try await UsageResponseMapper.makeSnapshot(
@@ -91,7 +103,7 @@ public actor CodexAppServerClient: UsageProviding {
         timeZone: timeZone()
       )
     } catch {
-      stopProcess(resumingPendingWith: error)
+      stopProcess(resumingPendingWith: error, ifGeneration: activeGeneration)
       throw error
     }
   }
@@ -102,37 +114,45 @@ public actor CodexAppServerClient: UsageProviding {
     fetchID = nil
   }
 
-  private func ensureStarted() async throws {
-    if process?.isRunning == true, isInitialized {
-      return
+  private func ensureStarted() async throws -> UUID {
+    if process?.isRunning == true, isInitialized, let generation {
+      return generation
     }
 
     stopProcess(resumingPendingWith: CancellationError())
-    try startProcess()
+    let startedGeneration = try startProcess()
 
-    let _: InitializeResult = try await requestDecoded(
-      method: "initialize",
-      params: [
-        "clientInfo": [
-          "name": "codex-meter",
-          "title": "CodexMeter",
-          "version": "0.4.0",
-        ],
-        "capabilities": [
-          "experimentalApi": true,
-          "optOutNotificationMethods": [
-            "thread/started",
-            "thread/tokenUsage/updated",
-            "fs/changed",
+    do {
+      let _: InitializeResult = try await requestDecoded(
+        method: "initialize",
+        params: [
+          "clientInfo": [
+            "name": "codex-meter",
+            "title": "CodexMeter",
+            "version": "0.4.0",
+          ],
+          "capabilities": [
+            "experimentalApi": true,
+            "optOutNotificationMethods": [
+              "thread/started",
+              "thread/tokenUsage/updated",
+              "fs/changed",
+            ],
           ],
         ],
-      ]
-    )
-    try sendNotification(method: "initialized")
-    isInitialized = true
+        generation: startedGeneration
+      )
+      try sendNotification(method: "initialized", generation: startedGeneration)
+      guard generation == startedGeneration else { throw CancellationError() }
+      isInitialized = true
+      return startedGeneration
+    } catch {
+      stopProcess(resumingPendingWith: error, ifGeneration: startedGeneration)
+      throw error
+    }
   }
 
-  private func startProcess() throws {
+  private func startProcess() throws -> UUID {
     let executable = try locator.locate()
     let newGeneration = UUID()
     let process = Process()
@@ -141,13 +161,7 @@ public actor CodexAppServerClient: UsageProviding {
     let errorPipe = Pipe()
 
     process.executableURL = executable
-    process.arguments = [
-      "app-server",
-      "--listen",
-      "stdio://",
-      "-c",
-      "model_reasoning_effort=\"xhigh\"",
-    ]
+    process.arguments = processArguments
     process.currentDirectoryURL = FileManager.default.homeDirectoryForCurrentUser
     var environment = ProcessInfo.processInfo.environment
     environment["NO_COLOR"] = "1"
@@ -163,6 +177,7 @@ public actor CodexAppServerClient: UsageProviding {
     }
 
     do {
+      try ProcessPipeIO.suppressSIGPIPE(on: inputPipe.fileHandleForWriting)
       try process.run()
     } catch {
       throw CodexAppServerError.launchFailed(error.localizedDescription)
@@ -179,28 +194,35 @@ public actor CodexAppServerClient: UsageProviding {
     framer = JSONLineFramer()
 
     let stdout = outputPipe.fileHandleForReading
+    let stdoutReader = ProcessPipeReader(handle: stdout, label: "stdout")
+    self.stdoutReader = stdoutReader
     stdoutReaderTask = Task.detached(priority: .utility) { [weak self] in
-      while !Task.isCancelled {
-        let data = stdout.availableData
-        guard !data.isEmpty else { break }
+      let outcome = await stdoutReader.read { [weak self] data in
         await self?.receive(data, generation: newGeneration)
       }
-      await self?.stdoutEnded(generation: newGeneration)
+      await self?.stdoutEnded(generation: newGeneration, outcome: outcome)
     }
 
     let stderr = errorPipe.fileHandleForReading
+    let stderrReader = ProcessPipeReader(handle: stderr, label: "stderr")
+    self.stderrReader = stderrReader
     stderrReaderTask = Task.detached(priority: .utility) {
-      while !Task.isCancelled {
-        guard !stderr.availableData.isEmpty else { break }
-      }
+      _ = await stderrReader.read { _ in }
     }
+
+    return newGeneration
   }
 
   private func requestDecoded<Response: Decodable & Sendable>(
     method: String,
-    params: Any? = nil
+    params: Any? = nil,
+    generation: UUID
   ) async throws -> Response {
-    let data = try await requestWithTimeout(method: method, params: params)
+    let data = try await requestWithTimeout(
+      method: method,
+      params: params,
+      generation: generation
+    )
     do {
       return try JSONDecoder().decode(Response.self, from: data)
     } catch {
@@ -208,11 +230,20 @@ public actor CodexAppServerClient: UsageProviding {
     }
   }
 
-  private func requestWithTimeout(method: String, params: Any?) async throws -> Data {
-    try await request(method: method, params: params)
+  private func requestWithTimeout(
+    method: String,
+    params: Any?,
+    generation: UUID
+  ) async throws -> Data {
+    try await request(method: method, params: params, generation: generation)
   }
 
-  private func request(method: String, params: Any?) async throws -> Data {
+  private func request(
+    method: String,
+    params: Any?,
+    generation: UUID
+  ) async throws -> Data {
+    guard self.generation == generation else { throw CancellationError() }
     let requestID = nextRequestID
     nextRequestID += 1
 
@@ -238,7 +269,7 @@ public actor CodexAppServerClient: UsageProviding {
           if let params {
             message["params"] = params
           }
-          try send(message)
+          try send(message, generation: generation)
         } catch {
           pending.removeValue(forKey: requestID)?.timeoutTask.cancel()
           continuation.resume(throwing: error)
@@ -260,11 +291,12 @@ public actor CodexAppServerClient: UsageProviding {
     request.continuation.resume(throwing: CodexAppServerError.requestTimedOut)
   }
 
-  private func sendNotification(method: String) throws {
-    try send(["method": method])
+  private func sendNotification(method: String, generation: UUID) throws {
+    try send(["method": method], generation: generation)
   }
 
-  private func send(_ object: [String: Any]) throws {
+  private func send(_ object: [String: Any], generation: UUID) throws {
+    guard self.generation == generation else { throw CancellationError() }
     guard let inputHandle, process?.isRunning == true else {
       throw CodexAppServerError.connectionClosed(process?.terminationStatus ?? -1)
     }
@@ -275,8 +307,12 @@ public actor CodexAppServerClient: UsageProviding {
 
   private func receive(_ data: Data, generation: UUID) {
     guard self.generation == generation else { return }
-    for line in framer.append(data) {
-      handle(line)
+    do {
+      for line in try framer.append(data) {
+        handle(line)
+      }
+    } catch {
+      stopProcess(resumingPendingWith: error, ifGeneration: generation)
     }
   }
 
@@ -317,32 +353,59 @@ public actor CodexAppServerClient: UsageProviding {
     guard self.generation == generation else { return }
     observedTerminationStatus = status
     if stdoutDidEnd {
-      stopProcess(resumingPendingWith: CodexAppServerError.connectionClosed(status))
-    }
-  }
-
-  private func stdoutEnded(generation: UUID) {
-    guard self.generation == generation else { return }
-    stdoutDidEnd = true
-    if let status = observedTerminationStatus {
-      stopProcess(resumingPendingWith: CodexAppServerError.connectionClosed(status))
-    } else if process?.isRunning == false {
       stopProcess(
-        resumingPendingWith: CodexAppServerError.connectionClosed(
-          process?.terminationStatus ?? -1
-        )
+        resumingPendingWith: CodexAppServerError.connectionClosed(status),
+        ifGeneration: generation
       )
     }
   }
 
-  private func stopProcess(resumingPendingWith error: any Error) {
+  private func stdoutEnded(
+    generation: UUID,
+    outcome: ProcessPipeReadOutcome
+  ) {
+    guard self.generation == generation else { return }
+
+    if outcome == .failed || outcome == .cancelled {
+      stopProcess(
+        resumingPendingWith: CodexAppServerError.connectionInterrupted,
+        ifGeneration: generation
+      )
+      return
+    }
+
+    stdoutDidEnd = true
+    if let status = observedTerminationStatus {
+      stopProcess(
+        resumingPendingWith: CodexAppServerError.connectionClosed(status),
+        ifGeneration: generation
+      )
+    } else if process?.isRunning == false {
+      stopProcess(
+        resumingPendingWith: CodexAppServerError.connectionClosed(
+          process?.terminationStatus ?? -1
+        ),
+        ifGeneration: generation
+      )
+    } else {
+      stopProcess(
+        resumingPendingWith: CodexAppServerError.connectionInterrupted,
+        ifGeneration: generation
+      )
+    }
+  }
+
+  private func stopProcess(
+    resumingPendingWith error: any Error,
+    ifGeneration expectedGeneration: UUID? = nil
+  ) {
+    if let expectedGeneration, generation != expectedGeneration { return }
+
     let stdoutTask = stdoutReaderTask
     let stderrTask = stderrReaderTask
-    let outputReadHandle = outputPipe?.fileHandleForReading
-    let errorReadHandle = errorPipe?.fileHandleForReading
-    try? inputHandle?.close()
-    try? outputReadHandle?.close()
-    try? errorReadHandle?.close()
+    let stdoutReader = stdoutReader
+    let stderrReader = stderrReader
+    let inputWriteHandle = inputHandle
 
     let activeProcess = process
     activeProcess?.terminationHandler = nil
@@ -350,6 +413,8 @@ public actor CodexAppServerClient: UsageProviding {
     inputHandle = nil
     outputPipe = nil
     errorPipe = nil
+    self.stdoutReader = nil
+    self.stderrReader = nil
     stdoutReaderTask = nil
     stderrReaderTask = nil
     generation = nil
@@ -360,16 +425,26 @@ public actor CodexAppServerClient: UsageProviding {
 
     stdoutTask?.cancel()
     stderrTask?.cancel()
+    stdoutReader?.cancel()
+    stderrReader?.cancel()
 
+    try? inputWriteHandle?.close()
+    if activeProcess?.isRunning == true {
+      activeProcess?.terminate()
+    }
     let requests = pending.values
     pending.removeAll()
     for request in requests {
       request.timeoutTask.cancel()
       request.continuation.resume(throwing: error)
     }
-
-    if activeProcess?.isRunning == true {
-      activeProcess?.terminate()
-    }
   }
+
+  private static let defaultProcessArguments = [
+    "app-server",
+    "--listen",
+    "stdio://",
+    "-c",
+    "model_reasoning_effort=\"xhigh\"",
+  ]
 }

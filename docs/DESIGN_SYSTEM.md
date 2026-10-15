@@ -45,6 +45,8 @@ Color is semantic, never decorative:
 | Critical | Immediate constraint or offline failure | 0–20% remaining; no current data connection |
 | Neutral | Connecting, syncing, or unavailable | Transitional states and tracks |
 
+System readings invert the quota mapping because a higher number is worse: neutral below 75% used, caution from 75%, critical from 90%. Swap is judged by size in use—caution from 1 GiB, critical from 4 GiB—because macOS sizes its swap file on demand.
+
 Use semantic system colors for text and native material adaptation. Never encode state with opacity alone. All status colors require a text label, symbol, or both.
 
 ### Typography
@@ -58,10 +60,11 @@ CodexMeter uses Apple system fonts only. This preserves native rendering, Dynami
 | Body | `typography.size.body` | System regular/medium |
 | Metadata | `typography.size.metadata` | Monospaced, regular, tabular numerals |
 | Label / brand | `typography.size.label` / `brand` | Semibold; short copy only |
+| Ring stat | `typography.size.systemStat*` | Rounded, semibold, tabular numerals; ring cluster only |
 
 Do not introduce a third type family. Avoid uppercase for sentences; reserve compact uppercase treatment for stable micro-labels where localization remains readable.
 
-Ten points is the minimum for compact widget labels and metadata. Ordinary body copy uses 11 points or larger; Settings should prefer native control and text styles rather than forcing compact widget sizing into a full window.
+Ten points is the minimum for compact widget labels and metadata. The quota ring's system cluster is the single documented exception: its tag and value roles run at 7.5 and 8.5 points because the readings must sit inside an 84 pt ring that never grows. Nothing outside that cluster may borrow those sizes. Ordinary body copy uses 11 points or larger; Settings should prefer native control and text styles rather than forcing compact widget sizing into a full window.
 
 ### Spacing and Shape
 
@@ -117,8 +120,10 @@ Animation must not resize a control or move a neighboring hit target. Persistent
 ### Primary Quota Ring
 
 - Diameter: 84 pt.
-- Shows one remaining percentage and one unambiguous window label.
+- Shows one remaining percentage with a tight window tag ("5H"), then a hairline divider and three system rows: memory, swap, and disk.
 - Uses a single semantic progress tone; the track remains quiet.
+- Each system row is one quiet label and one value; only the value carries severity color, so a healthy machine reads as a calm column.
+- Center content is capped at 46 pt wide so no row can reach the quota stroke at any supported value or in either language.
 - Reset timing belongs in adjacent metadata when placing it inside the ring would crowd the value.
 
 ### Token Activity

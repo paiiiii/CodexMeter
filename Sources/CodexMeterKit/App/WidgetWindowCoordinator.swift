@@ -38,6 +38,24 @@ struct WidgetWindowGeometry {
   }
 }
 
+/// Where the widget lands while the pointer drags it.
+///
+/// The anchor stores both the window origin and the pointer position in screen
+/// coordinates, taken when the drag starts. Screen coordinates are the point:
+/// the window moves out from under the gesture's own coordinate space, so a
+/// translation measured there would feed back into itself and stutter.
+struct WidgetDragAnchor: Equatable, Sendable {
+  let windowOrigin: CGPoint
+  let pointerOrigin: CGPoint
+
+  func origin(forPointer pointer: CGPoint) -> CGPoint {
+    CGPoint(
+      x: windowOrigin.x + (pointer.x - pointerOrigin.x),
+      y: windowOrigin.y + (pointer.y - pointerOrigin.y)
+    )
+  }
+}
+
 struct WidgetMorphGeometry {
   static let fullQuotaCenterTopLeading = CGPoint(x: 63, y: 99)
   static let minimalQuotaCenterTopLeading = CGPoint(x: 55, y: 55)
@@ -180,6 +198,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   public private(set) var layoutMode: WidgetLayoutMode
   public private(set) var isLayoutTransitioning = false
   public private(set) var isWidgetPresented: Bool
+  public let systemStore: SystemMetricsStore
 
   private enum Keys {
     static let mode = "CodexMeter.presentationMode"
@@ -197,16 +216,40 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   private var layoutTransitionID = UUID()
 
   @ObservationIgnored
-  private lazy var panel: CodexMeterPanel = makePanel()
+  private var dragAnchor: WidgetDragAnchor?
+
+  @ObservationIgnored
+  private var panelStorage: CodexMeterPanel?
+
+  /// A `lazy var` re-runs its initializer when it is read re-entrantly, and
+  /// restoring the saved frame makes AppKit post screen-change notifications to
+  /// this delegate, which reads the panel back. Publishing the panel before
+  /// configuring it — and attaching the delegate only once configuration is
+  /// finished — keeps such a callback from building a second panel, which
+  /// recursed until the main thread ran out of stack.
+  private var panel: CodexMeterPanel {
+    if let panelStorage { return panelStorage }
+    let panel = CodexMeterPanel(
+      contentRect: NSRect(origin: .zero, size: widgetSize),
+      styleMask: [.borderless, .nonactivatingPanel],
+      backing: .buffered,
+      defer: false
+    )
+    panelStorage = panel
+    configure(panel)
+    return panel
+  }
 
   public init(
     store: UsageStore,
     languageController: LanguageController,
-    defaults: UserDefaults = .standard
+    defaults: UserDefaults = .standard,
+    systemMetricsProvider: any SystemMetricsProviding = DarwinSystemMetricsProvider()
   ) {
     self.store = store
     self.languageController = languageController
     self.defaults = defaults
+    systemStore = SystemMetricsStore(provider: systemMetricsProvider)
 
     let savedMode =
       defaults.string(forKey: Keys.mode)
@@ -234,6 +277,11 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
       object: nil
     )
     apply(mode, animated: false)
+    systemStore.start()
+  }
+
+  public func stop() {
+    systemStore.stop()
   }
 
   public func setMode(_ newMode: WidgetPresentationMode) {
@@ -266,6 +314,27 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     setLayoutMode(layoutMode == .minimal ? .full : .minimal)
   }
 
+  /// Moves the widget with the pointer.
+  ///
+  /// The quota ring carries a tap gesture, and a SwiftUI gesture consumes
+  /// mouse-down, which switches off AppKit's own window-background dragging
+  /// wherever it applies. In the Minimal layout the ring is the whole widget, so
+  /// without this the widget cannot be moved at all.
+  public func dragWidget(pointer: CGPoint = NSEvent.mouseLocation) {
+    guard !isLayoutTransitioning else { return }
+    let anchor =
+      dragAnchor
+      ?? WidgetDragAnchor(windowOrigin: panel.frame.origin, pointerOrigin: pointer)
+    dragAnchor = anchor
+    panel.setFrameOrigin(anchor.origin(forPointer: pointer))
+  }
+
+  public func endWidgetDrag() {
+    guard dragAnchor != nil else { return }
+    dragAnchor = nil
+    clampToVisibleScreen(panel)
+  }
+
   var widgetSize: NSSize {
     WidgetWindowGeometry.size(for: layoutMode)
   }
@@ -294,15 +363,8 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     panel.orderFrontRegardless()
   }
 
-  private func makePanel() -> CodexMeterPanel {
+  private func configure(_ panel: CodexMeterPanel) {
     let initialSize = widgetSize
-    let panel = CodexMeterPanel(
-      contentRect: NSRect(origin: .zero, size: initialSize),
-      styleMask: [.borderless, .nonactivatingPanel],
-      backing: .buffered,
-      defer: false
-    )
-    panel.delegate = self
     panel.title = "CodexMeter"
     panel.isOpaque = false
     panel.backgroundColor = .clear
@@ -336,7 +398,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
       positionAtTopRight(panel)
     }
     clampToVisibleScreen(panel)
-    return panel
+    panel.delegate = self
   }
 
   private func apply(_ mode: WidgetPresentationMode, animated: Bool) {
@@ -345,6 +407,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     let currentTransitionID = UUID()
     transitionID = currentTransitionID
     store.setWidgetVisible(policy.isVisible)
+    systemStore.setWidgetVisible(policy.isVisible)
     let shouldAnimate = animated && !NSWorkspace.shared.accessibilityDisplayShouldReduceMotion
 
     if !policy.isVisible {
@@ -412,6 +475,7 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
     let currentLayoutTransitionID = UUID()
     layoutTransitionID = currentLayoutTransitionID
     isLayoutTransitioning = true
+    dragAnchor = nil
     panel.isMovableByWindowBackground = false
     panel.hasShadow = false
 
@@ -503,6 +567,10 @@ public final class WidgetWindowCoordinator: NSObject, NSWindowDelegate {
   }
 
   public func windowDidChangeScreen(_ notification: Notification) {
+    // Dragging onto another display crosses this callback; clamping here would
+    // yank the widget out from under the pointer. `endWidgetDrag` clamps once
+    // the pointer is released.
+    guard dragAnchor == nil else { return }
     clampToVisibleScreen(panel)
   }
 }

@@ -48,19 +48,30 @@ public struct WidgetView: View {
             .accessibilityHidden(progress < 0.995)
         }
 
-        QuotaRing(window: store.snapshot?.primary)
-          .frame(
-            width: CodexMeterDesign.Metrics.quotaRing,
-            height: CodexMeterDesign.Metrics.quotaRing
-          )
-          .position(quotaCenter)
-
-        minimalInteractionLayer
-          .position(quotaCenter)
-          .allowsHitTesting(
-            progress < 0.005 && !coordinator.isLayoutTransitioning
-          )
-          .accessibilityHidden(progress >= 0.005)
+        QuotaRing(
+          window: store.snapshot?.primary,
+          system: coordinator.systemStore.snapshot
+        )
+        .frame(
+          width: CodexMeterDesign.Metrics.quotaRing,
+          height: CodexMeterDesign.Metrics.quotaRing
+        )
+        .contentShape(Circle())
+        .onTapGesture(count: 2) {
+          coordinator.toggleLayoutMode()
+        }
+        .simultaneousGesture(widgetDragGesture)
+        .help(quotaRingHelp)
+        .contextMenu {
+          Button(layoutToggleTitle) {
+            coordinator.toggleLayoutMode()
+          }
+        }
+        .accessibilityAction(named: Text(layoutToggleTitle)) {
+          coordinator.toggleLayoutMode()
+        }
+        .position(quotaCenter)
+        .allowsHitTesting(!coordinator.isLayoutTransitioning)
       }
       .frame(
         width: geometry.size.width,
@@ -106,23 +117,32 @@ public struct WidgetView: View {
     WidgetContentPolicy.policy(for: coordinator.layoutMode)
   }
 
-  private var minimalInteractionLayer: some View {
-    Circle()
-      .fill(.clear)
-      .frame(
-        width: CodexMeterDesign.Metrics.minimalQuotaRing,
-        height: CodexMeterDesign.Metrics.minimalQuotaRing
-      )
-      .contentShape(Circle())
-      .help(localizer.string(.widgetMinimalHelp))
-      .contextMenu {
-        Button(localizer.string(.widgetRestoreFullView)) {
-          coordinator.setLayoutMode(.full)
-        }
-      }
-      .accessibilityAction(named: Text(localizer.string(.widgetRestoreFullView))) {
-        coordinator.setLayoutMode(.full)
-      }
+  /// The ring's tap gesture takes mouse-down away from AppKit, so the widget
+  /// would otherwise be pinned in place wherever the ring covers it. The
+  /// activation distance keeps a stationary double-click from starting a drag.
+  private var widgetDragGesture: some Gesture {
+    DragGesture(minimumDistance: CodexMeterDesign.Metrics.dragActivation)
+      .onChanged { _ in coordinator.dragWidget() }
+      .onEnded { _ in coordinator.endWidgetDrag() }
+  }
+
+  private var quotaRingHelp: String {
+    [
+      MetricFormatter.systemHelp(
+        for: coordinator.systemStore.snapshot,
+        localizer: localizer
+      ),
+      localizer.string(.widgetQuotaRingToggleHelp),
+    ]
+    .joined(separator: "\n")
+  }
+
+  private var layoutToggleTitle: String {
+    localizer.string(
+      coordinator.layoutMode == .minimal
+        ? .widgetRestoreFullView
+        : .widgetUseMinimalView
+    )
   }
 
   private var fullQuotaAnchor: UnitPoint {
@@ -386,6 +406,7 @@ private struct LiveStatusView: View {
 
 private struct QuotaRing: View {
   let window: QuotaWindow?
+  let system: SystemMetricsSnapshot?
 
   @Environment(\.accessibilityReduceMotion) private var reduceMotion
   @Environment(LanguageController.self) private var languageController
@@ -433,23 +454,59 @@ private struct QuotaRing: View {
       }
       .compositingGroup()
 
-      VStack(spacing: CodexMeterDesign.Spacing.compact) {
-        Text(window == nil ? "—" : localizer.percent(remaining))
-          .font(CodexMeterDesign.Typography.quotaMetric)
-          .monospacedDigit()
-          .contentTransition(.numericText(value: Double(remaining)))
+      VStack(spacing: 1) {
+        HStack(alignment: .firstTextBaseline, spacing: 2) {
+          Text(window == nil ? "—" : localizer.percent(remaining))
+            .font(CodexMeterDesign.Typography.quotaMetric)
+            .monospacedDigit()
+            .contentTransition(.numericText(value: Double(remaining)))
 
-        Text(
-          MetricFormatter.shortQuotaLabel(
+          if let tag = MetricFormatter.tightQuotaLabel(
             for: window,
-            fallback: .quotaPrimary,
             localizer: localizer
-          )
+          ) {
+            Text(tag)
+              .font(CodexMeterDesign.Typography.quotaWindowTag)
+              .tracking(0.3)
+              .foregroundStyle(.secondary)
+          }
+        }
+        .lineLimit(1)
+        .minimumScaleFactor(0.7)
+
+        Rectangle()
+          .fill(CodexMeterDesign.ColorToken.divider)
+          .frame(width: 24, height: 0.5)
+          .padding(.vertical, 0.5)
+
+        SystemStatRow(
+          tag: localizer.string(.systemMemoryTag),
+          value: MetricFormatter.ringPercent(
+            system?.memoryUsedPercent,
+            localizer: localizer
+          ),
+          severity: SystemLoadSeverity.classify(usedPercent: system?.memoryUsedPercent)
         )
-        .font(CodexMeterDesign.Typography.sectionLabel)
-        .tracking(0.7)
-        .foregroundStyle(.secondary)
+
+        SystemStatRow(
+          tag: localizer.string(.systemSwapTag),
+          value: MetricFormatter.compactBytes(
+            system?.swapUsedBytes,
+            localizer: localizer
+          ),
+          severity: SystemLoadSeverity.classifySwap(usedBytes: system?.swapUsedBytes)
+        )
+
+        SystemStatRow(
+          tag: localizer.string(.systemDiskTag),
+          value: MetricFormatter.ringPercent(
+            system?.diskUsedPercent,
+            localizer: localizer
+          ),
+          severity: SystemLoadSeverity.classify(usedPercent: system?.diskUsedPercent)
+        )
       }
+      .frame(width: CodexMeterDesign.Metrics.ringContentWidth)
     }
     .accessibilityElement(children: .ignore)
     .accessibilityLabel(
@@ -460,8 +517,9 @@ private struct QuotaRing: View {
       )
     )
     .accessibilityValue(
-      MetricFormatter.quotaAccessibilityValue(
-        for: window,
+      MetricFormatter.ringAccessibilityValue(
+        window: window,
+        system: system,
         localizer: localizer
       )
     )
@@ -476,6 +534,40 @@ private struct QuotaRing: View {
 
   private var localizer: AppLocalizer {
     languageController.localizer
+  }
+}
+
+/// One `LABEL   VALUE` line inside the quota ring. The label stays quiet and the
+/// value carries the color, so a healthy machine reads as a single calm column.
+///
+/// System readings move on every sample, so they are never animated: a transition
+/// here would leave the settled widget in perpetual motion.
+private struct SystemStatRow: View {
+  let tag: String
+  let value: String
+  let severity: SystemLoadSeverity
+
+  var body: some View {
+    HStack(spacing: 3) {
+      Text(tag)
+        .font(CodexMeterDesign.Typography.systemStatLabel)
+        .foregroundStyle(.secondary)
+        .frame(
+          width: CodexMeterDesign.Metrics.ringStatLabelWidth,
+          alignment: .leading
+        )
+
+      Text(value)
+        .font(CodexMeterDesign.Typography.systemStatValue)
+        .monospacedDigit()
+        .foregroundStyle(severity.color)
+        .frame(
+          width: CodexMeterDesign.Metrics.ringStatValueWidth,
+          alignment: .trailing
+        )
+    }
+    .lineLimit(1)
+    .minimumScaleFactor(0.7)
   }
 }
 
@@ -684,21 +776,109 @@ enum MetricFormatter {
     return localizer.format(minutes == 1 ? .quotaMinutesOne : .quotaMinutesOther, minutes)
   }
 
-  static func shortQuotaLabel(
+  /// The shortest readable window tag ("5H") for the crowded ring center.
+  /// Returns `nil` when Codex has not reported a window length yet.
+  static func tightQuotaLabel(
     for window: QuotaWindow?,
-    fallback: L10nKey,
     localizer: AppLocalizer
-  ) -> String {
+  ) -> String? {
     guard let minutes = window?.windowDurationMinutes, minutes > 0 else {
-      return localizer.format(.quotaShortFallbackFormat, localizer.string(fallback))
+      return nil
     }
     if minutes.isMultiple(of: 1_440) {
-      return localizer.format(.quotaShortDaysFormat, minutes / 1_440)
+      return localizer.format(.quotaTightDaysFormat, minutes / 1_440)
     }
     if minutes.isMultiple(of: 60) {
-      return localizer.format(.quotaShortHoursFormat, minutes / 60)
+      return localizer.format(.quotaTightHoursFormat, minutes / 60)
     }
-    return localizer.format(.quotaShortMinutesFormat, minutes)
+    return localizer.format(.quotaTightMinutesFormat, minutes)
+  }
+
+  static func ringPercent(_ value: Int?, localizer: AppLocalizer) -> String {
+    guard let value else { return "—" }
+    return localizer.percent(value)
+  }
+
+  /// Four characters at most, so a stat row never crowds the ring stroke.
+  static func compactBytes(_ value: UInt64?, localizer: AppLocalizer) -> String {
+    guard let value else { return "—" }
+    let units: [(scale: UInt64, suffix: String)] = [
+      (1_099_511_627_776, "T"),
+      (1_073_741_824, "G"),
+      (1_048_576, "M"),
+    ]
+    for unit in units where value >= unit.scale {
+      let scaled = Double(value) / Double(unit.scale)
+      return scaled.formatted(
+        .number
+          .precision(.fractionLength(scaled < 10 ? 1 : 0))
+          .locale(localizer.locale)
+      ) + unit.suffix
+    }
+    return "0"
+  }
+
+  static func detailedBytes(
+    _ value: UInt64,
+    style: ByteCountFormatStyle.Style,
+    localizer: AppLocalizer
+  ) -> String {
+    Int64(clamping: value).formatted(
+      .byteCount(style: style).locale(localizer.locale)
+    )
+  }
+
+  static func systemHelp(
+    for snapshot: SystemMetricsSnapshot?,
+    localizer: AppLocalizer
+  ) -> String {
+    guard let snapshot else { return localizer.string(.systemUnavailable) }
+    let memory = localizer.format(
+      .systemMemoryHelpFormat,
+      detailedBytes(snapshot.memoryUsedBytes, style: .memory, localizer: localizer),
+      detailedBytes(snapshot.memoryTotalBytes, style: .memory, localizer: localizer)
+    )
+    let swap =
+      snapshot.swapUsedBytes == 0
+      ? localizer.string(.systemSwapIdleHelp)
+      : localizer.format(
+        .systemSwapHelpFormat,
+        detailedBytes(snapshot.swapUsedBytes, style: .memory, localizer: localizer)
+      )
+    let disk = localizer.format(
+      .systemDiskHelpFormat,
+      detailedBytes(snapshot.diskUsedBytes, style: .file, localizer: localizer),
+      detailedBytes(snapshot.diskTotalBytes, style: .file, localizer: localizer),
+      detailedBytes(snapshot.diskFreeBytes, style: .file, localizer: localizer)
+    )
+    return [memory, swap, disk].joined(separator: "\n")
+  }
+
+  /// The ring is one accessibility element, so its value carries the quota and
+  /// the system readings joined by the shared localized summary separator.
+  static func ringAccessibilityValue(
+    window: QuotaWindow?,
+    system: SystemMetricsSnapshot?,
+    localizer: AppLocalizer
+  ) -> String {
+    localizer.format(
+      .menuBarSummaryFormat,
+      quotaAccessibilityValue(for: window, localizer: localizer),
+      systemAccessibilityValue(for: system, localizer: localizer)
+    )
+  }
+
+  static func systemAccessibilityValue(
+    for snapshot: SystemMetricsSnapshot?,
+    localizer: AppLocalizer
+  ) -> String {
+    guard let snapshot else { return localizer.string(.systemUnavailable) }
+    return localizer.format(
+      .systemAccessibilityFormat,
+      localizer.percent(snapshot.memoryUsedPercent),
+      detailedBytes(snapshot.swapUsedBytes, style: .memory, localizer: localizer),
+      localizer.percent(snapshot.diskUsedPercent)
+    )
   }
 
   static func quotaAccessibilityValue(

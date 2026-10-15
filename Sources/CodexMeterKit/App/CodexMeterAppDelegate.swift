@@ -29,12 +29,14 @@ public final class CodexMeterAppDelegate: NSObject, NSApplicationDelegate {
 
   public func applicationWillTerminate(_ notification: Notification) {
     store.stop()
+    windowCoordinator.stop()
   }
 
   public func applicationShouldTerminate(_ sender: NSApplication) -> NSApplication.TerminateReply {
     guard !isTerminating else { return .terminateLater }
     isTerminating = true
     store.stop()
+    windowCoordinator.stop()
     Task {
       await store.shutdown()
       sender.reply(toApplicationShouldTerminate: true)

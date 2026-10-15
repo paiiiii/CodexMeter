@@ -4,6 +4,14 @@ import XCTest
 
 @testable import CodexMeterKit
 
+/// Design QA images must not drift with whatever this Mac happens to be doing,
+/// so the rendered widget reads a fixed system sample.
+private struct FixedSystemMetricsProvider: SystemMetricsProviding {
+  let snapshot: SystemMetricsSnapshot
+
+  func sample() -> SystemMetricsSnapshot? { snapshot }
+}
+
 private actor DesignSnapshotProvider: UsageProviding {
   let snapshot: UsageSnapshot
 
@@ -89,6 +97,47 @@ final class WidgetRenderingTests: XCTestCase {
       chineseImage,
       to: URL(fileURLWithPath: directory)
         .appendingPathComponent("widget-minimal-zh-dark.png")
+    )
+  }
+
+  func testMinimalWidgetKeepsItsWidestSystemValuesInsideTheRing() async throws {
+    let englishImage = try await renderWidget(
+      language: .english,
+      colorScheme: .light,
+      layoutMode: .minimal,
+      primaryUsedPercent: 0,
+      system: .designQAStressFixture
+    )
+    let chineseImage = try await renderWidget(
+      language: .simplifiedChinese,
+      colorScheme: .dark,
+      layoutMode: .minimal,
+      primaryUsedPercent: 0,
+      system: .designQAStressFixture
+    )
+
+    try assertMinimalCanvas(englishImage)
+    try assertMinimalCanvas(chineseImage)
+
+    guard
+      let directory = ProcessInfo.processInfo.environment[
+        "CODEX_METER_WIDGET_SNAPSHOT_DIR"
+      ]
+    else { return }
+
+    try FileManager.default.createDirectory(
+      atPath: directory,
+      withIntermediateDirectories: true
+    )
+    try writePNG(
+      englishImage,
+      to: URL(fileURLWithPath: directory)
+        .appendingPathComponent("widget-minimal-stress-en-light.png")
+    )
+    try writePNG(
+      chineseImage,
+      to: URL(fileURLWithPath: directory)
+        .appendingPathComponent("widget-minimal-stress-zh-dark.png")
     )
   }
 
@@ -196,6 +245,7 @@ final class WidgetRenderingTests: XCTestCase {
     colorScheme: ColorScheme,
     layoutMode: WidgetLayoutMode,
     primaryUsedPercent: Int = 45,
+    system: SystemMetricsSnapshot = .designQAFixture,
     renderSize: CGSize? = nil
   ) async throws -> CGImage {
     let suiteName = "CodexMeterTests.Rendering.\(UUID().uuidString)"
@@ -238,7 +288,8 @@ final class WidgetRenderingTests: XCTestCase {
     let coordinator = WidgetWindowCoordinator(
       store: store,
       languageController: languageController,
-      defaults: defaults
+      defaults: defaults,
+      systemMetricsProvider: FixedSystemMetricsProvider(snapshot: system)
     )
     coordinator.setLayoutMode(layoutMode)
 
@@ -257,4 +308,30 @@ final class WidgetRenderingTests: XCTestCase {
     renderer.scale = 2
     return try XCTUnwrap(renderer.cgImage)
   }
+}
+
+
+extension SystemMetricsSnapshot {
+  /// A calm but non-trivial machine: two thirds of memory in use, no swap, and a
+  /// comfortably filled startup volume.
+  static let designQAFixture = SystemMetricsSnapshot(
+    sampledAt: Date(timeIntervalSince1970: 1_000_000),
+    memoryUsedBytes: 22_548_578_304,
+    memoryTotalBytes: 34_359_738_368,
+    swapUsedBytes: 0,
+    swapTotalBytes: 0,
+    diskUsedBytes: 578_000_000_000,
+    diskTotalBytes: 994_662_584_320
+  )
+
+  /// The widest string every stat row can produce, for crop-safety review.
+  static let designQAStressFixture = SystemMetricsSnapshot(
+    sampledAt: Date(timeIntervalSince1970: 1_000_000),
+    memoryUsedBytes: 137_438_953_472,
+    memoryTotalBytes: 137_438_953_472,
+    swapUsedBytes: 13_314_398_617,
+    swapTotalBytes: 16_106_127_360,
+    diskUsedBytes: 3_995_035_832_320,
+    diskTotalBytes: 3_995_035_832_320
+  )
 }

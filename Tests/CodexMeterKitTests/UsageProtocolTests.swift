@@ -89,17 +89,26 @@ final class UsageProtocolTests: XCTestCase {
     )
   }
 
-  func testJSONLineFramerHandlesSplitAndMultipleMessages() {
+  func testJSONLineFramerHandlesSplitAndMultipleMessages() throws {
     var framer = JSONLineFramer()
 
-    XCTAssertTrue(framer.append(Data("{\"id\":1,\"res".utf8)).isEmpty)
-    let lines = framer.append(
+    XCTAssertTrue(try framer.append(Data("{\"id\":1,\"res".utf8)).isEmpty)
+    let lines = try framer.append(
       Data("ult\":{}}\n{\"id\":2,\"result\":{}}\r\n".utf8)
     )
 
     XCTAssertEqual(lines.count, 2)
     XCTAssertEqual(String(decoding: lines[0], as: UTF8.self), "{\"id\":1,\"result\":{}}")
     XCTAssertEqual(String(decoding: lines[1], as: UTF8.self), "{\"id\":2,\"result\":{}}")
+  }
+
+  func testJSONLineFramerRejectsAnUnboundedMessage() throws {
+    var framer = JSONLineFramer(maximumFrameSize: 8)
+
+    XCTAssertThrowsError(try framer.append(Data("123456789".utf8))) { error in
+      XCTAssertEqual(error as? CodexAppServerError, .invalidMessage)
+    }
+    XCTAssertEqual(try framer.append(Data("{}\n".utf8)), [Data("{}".utf8)])
   }
 
   func testBinaryLocatorUsesFirstExecutableCandidate() throws {

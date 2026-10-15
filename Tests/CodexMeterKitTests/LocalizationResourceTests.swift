@@ -10,7 +10,10 @@ final class LocalizationResourceTests: XCTestCase {
     XCTAssertTrue(bundle.localizations.contains("en"))
     XCTAssertTrue(bundle.localizations.map { $0.lowercased() }.contains("zh-hans"))
     XCTAssertNotNil(bundle.url(forResource: "en", withExtension: "lproj"))
-    XCTAssertNotNil(bundle.url(forResource: "zh-hans", withExtension: "lproj"))
+    let chineseDirectory = try XCTUnwrap(
+      bundle.localizations.first { $0.lowercased() == "zh-hans" }
+    )
+    XCTAssertNotNil(bundle.url(forResource: chineseDirectory, withExtension: "lproj"))
 
     for language in SupportedAppLanguage.allCases {
       let localizer = AppLocalizer(language: language)

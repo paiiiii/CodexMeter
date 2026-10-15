@@ -40,8 +40,10 @@ enum SupportedAppLanguage: String, CaseIterable, Sendable {
     Locale(identifier: rawValue)
   }
 
-  var resourceDirectoryName: String {
-    rawValue.lowercased()
+  func resourceDirectoryName(in bundle: Bundle) -> String {
+    bundle.localizations.first {
+      $0.caseInsensitiveCompare(rawValue) == .orderedSame
+    } ?? rawValue
   }
 
   static func resolve(preferredLanguages: [String]) -> SupportedAppLanguage {
@@ -219,7 +221,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case widgetOpenSettings = "widget.open_settings"
   case widgetUseMinimalView = "widget.use_minimal_view"
   case widgetRestoreFullView = "widget.restore_full_view"
-  case widgetMinimalHelp = "widget.minimal_help"
+  case widgetQuotaRingToggleHelp = "widget.quota_ring_toggle_help"
   case widgetStatusSyncing = "widget.status.syncing"
   case widgetStatusCached = "widget.status.cached"
   case widgetStatusOffline = "widget.status.offline"
@@ -228,21 +230,29 @@ enum L10nKey: String, CaseIterable, Sendable {
   case widgetDataSourceHelp = "widget.data_source_help"
   case widgetConnectionStatusAccessibility = "widget.connection_status_accessibility"
 
-  case quotaPrimary = "quota.primary"
   case quotaPrimaryLimit = "quota.primary_limit"
   case quotaSecondaryLimit = "quota.secondary_limit"
   case quotaRemainingFormat = "quota.remaining_format"
-  case quotaShortFallbackFormat = "quota.short_fallback_format"
   case quotaDaysOne = "quota.days.one"
   case quotaDaysOther = "quota.days.other"
   case quotaHoursOne = "quota.hours.one"
   case quotaHoursOther = "quota.hours.other"
   case quotaMinutesOne = "quota.minutes.one"
   case quotaMinutesOther = "quota.minutes.other"
-  case quotaShortDaysFormat = "quota.short_days_format"
-  case quotaShortHoursFormat = "quota.short_hours_format"
-  case quotaShortMinutesFormat = "quota.short_minutes_format"
+  case quotaTightDaysFormat = "quota.tight_days_format"
+  case quotaTightHoursFormat = "quota.tight_hours_format"
+  case quotaTightMinutesFormat = "quota.tight_minutes_format"
   case quotaAccessibilityFormat = "quota.accessibility_format"
+
+  case systemMemoryTag = "system.memory_tag"
+  case systemSwapTag = "system.swap_tag"
+  case systemDiskTag = "system.disk_tag"
+  case systemMemoryHelpFormat = "system.memory_help_format"
+  case systemSwapHelpFormat = "system.swap_help_format"
+  case systemSwapIdleHelp = "system.swap_idle_help"
+  case systemDiskHelpFormat = "system.disk_help_format"
+  case systemUnavailable = "system.unavailable"
+  case systemAccessibilityFormat = "system.accessibility_format"
 
   case resetWaitingForSync = "reset.waiting_for_sync"
   case resetSoon = "reset.soon"
@@ -262,6 +272,7 @@ enum L10nKey: String, CaseIterable, Sendable {
   case errorBinaryNotFound = "error.binary_not_found"
   case errorLaunchFailedFormat = "error.launch_failed_format"
   case errorConnectionClosedFormat = "error.connection_closed_format"
+  case errorConnectionInterrupted = "error.connection_interrupted"
   case errorInvalidMessage = "error.invalid_message"
   case errorRPCFormat = "error.rpc_format"
   case errorRequestTimedOut = "error.request_timed_out"
@@ -323,7 +334,7 @@ struct AppLocalizer: Sendable {
   private var localizedBundle: Bundle {
     guard
       let url = CodexMeterResources.bundle.url(
-        forResource: language.resourceDirectoryName,
+        forResource: language.resourceDirectoryName(in: CodexMeterResources.bundle),
         withExtension: "lproj"
       ),
       let bundle = Bundle(url: url)
